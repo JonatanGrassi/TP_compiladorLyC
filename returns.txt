@@ -1,0 +1,35 @@
+/*
+{IF}		 {return IF;}
+{WHILE}		 {return WHILE;}
+{DECVAR}	 {return DECVAR;}
+{ENDDEC}	 {return ENDDEC;}
+{INTEGER}	 {return INTEGER;}
+{FLOAT}		 {return FLOAT;}
+{WRITE}		 {return WRITE;}
+{ELSE}		 {return ELSE;}
+{CONST_ENT}  {return CONST_ENT;}
+{CONST_REAL} {return CONST_REAL;}
+{STRING}	 {return STRING;}
+
+
+{PAR_A}		{return PAR_A;}
+{PAR_C}		{return PAR_C;}
+{LLAV_A}	{return LLAV_A;}
+{LLAV_C}	{return LLAV_C;}
+
+{PUNYCOM}		{return PUNYCOM;}
+{COMA}			{return COMA;}
+
+{OP_ASIG}		{return OP_ASIG;}
+{OP_SUMA}		{return OP_SUMA;}
+{OP_RESTA}		{return OP_RESTA;}
+{OP_DIV}		{return OP_DIV;}
+{OP_MULT}		{return OP_MULT;}
+{OP_MAY}		{return OP_MAY;}
+{OP_MAYEIGU}	{return OP_MAYEIGU;}
+{OP_MEN}		{return OP_MEN;}
+{OP_MENEIGU}	{return OP_MENEIGU;}
+{OP_IGUAL}		{return OP_IGUAL;}
+{OP_DIF}		{return OP_DIF;}
+{ID}		 	{return ID;}
+*/
