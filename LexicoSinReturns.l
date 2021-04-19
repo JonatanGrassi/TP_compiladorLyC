@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
-#include "y.tab.h"
 #include <string.h>
 #define LIMITE 30
 
@@ -49,6 +48,10 @@ ELSE		"else"
   
 OP_ASIG		[:]
 OP_SUMA		[+]
+
+OP_RESTA   [-]
+OP_DIV    [/]
+
 OP_MULT		[*]
 OP_MAY		[>]
 OP_MAYEIGU	">="
@@ -56,8 +59,6 @@ OP_MEN		[<]
 OP_MENEIGU	"<="
 OP_IGUAL	"=="
 OP_DIF		"!="
-OP_RESTA  [-]
-OP_DIV    [/]
 
 PAR_A	[(]
 PAR_C	[)]
@@ -69,42 +70,43 @@ PYC		[;]
 COMA		[,]
 
 %%
-	
-{IF}		      {return IF;}
-{WHILE}       {return WHILE;}
-{DECVAR}	    {return DECVAR;}
-{ENDDEC}	    {return ENDDEC;}
-{INTEGER}	    {return INTEGER;}
-{FLOAT}		    {return FLOAT;}
-{WRITE}		    {return WRITE;}
-{ELSE}		    {return ELSE;}
-{CONST_ENT}   {verifRangoCTE_ENT(yytext);colocarEnTablaSimb(yytext); return CONST_ENT;}
-{CONST_REAL}  {colocarEnTablaSimb(yytext);return CONST_REAL;}
-{ID}	        {colocarEnTablaSimb(yytext);verifRangoString(yytext);return ID;}
+{COMENTARIO} 		{printf("\n%s es un comentario\n",yytext);}
+{IF}		      {printf("\nPalabra reservada: [%s]\n",yytext);}
+{WHILE}		{printf("\nPalabra reservada: [%s]\n",yytext);}
+{DECVAR}	{printf("\nPalabra reservada: [%s]\n",yytext);}
+{ENDDEC}	{printf("\nPalabra reservada: [%s]\n",yytext);}
+{INTEGER}	{printf("\nPalabra reservada: [%s]\n",yytext);}
+{FLOAT}		{printf("\nPalabra reservada: [%s]\n",yytext);}
+{WRITE}		{printf("\nPalabra reservada: [%s]\n",yytext);}
+{ELSE}		{printf("\nPalabra reservada: [%s]\n",yytext);}
+{CONST_ENT} {verifRangoCTE_ENT(yytext);colocarEnTablaSimb(yytext);printf("\nConstante entera: [%s]\n",yytext);}
+{CONST_REAL} {colocarEnTablaSimb(yytext);printf("\nConstante Real: [%s]\n",yytext);}
+{ID}	{colocarEnTablaSimb(yytext);verifRangoString(yytext);printf("\nIdentificador: [%s]\n",yytext);}
 
-{PAR_A}		{return PAR_A;}
-{PAR_C}		{return PAR_C;}
-{LLAV_A}	{return LLAV_A;}
-{LLAV_C}	{return LLAV_C;}
+{PAR_A}	{printf("\nParentesis: [%s]\n",yytext);}
+{PAR_C}	{printf("\nParentesis: [%s]\n",yytext);}
+{LLAV_A}	{printf("\nLlave: [%s]\n",yytext);}
+{LLAV_C}	{printf("\nLlave: [%s]\n",yytext);}
+
+{PYC}		{printf("\nPuntuacion: [%s]\n",yytext);}
+{CTE_STRING}		{colocarEnTablaSimb(yytext);verifRangoString(yytext);printf("\nString: [%s]\n",yytext);}
+{COMA}			{printf("\nPuntuacion: [%s]\n",yytext);}
+
+{OP_ASIG}		{printf("\nOperadores: [%s]\n",yytext);}
 
 
-{PYC}		  {return PYC;}
-{COMA}			  {return COMA;}
-{CTE_STRING}	{colocarEnTablaSimb(yytext);verifRangoString(yytext);return CTE_STRING;}
+{OP_MULT}		{printf("\nOperadores: [%s]\n",yytext);}
+{OP_MAY}		{printf("\nOperadores: [%s]\n",yytext);}
+{OP_MAYEIGU}	{printf("\nOperadores: [%s]\n",yytext);}
+{OP_MEN}		{printf("\nOperadores: [%s]\n",yytext);}
+{OP_MENEIGU}	{printf("\nOperadores: [%s]\n",yytext);}
+{OP_IGUAL}		{printf("\nOperadores: [%s]\n",yytext);}
+{OP_DIF}		{printf("\nOperadores: [%s]\n",yytext);}
 
-{OP_ASIG}		{return OP_ASIG;}
-{OP_SUMA}		{return OP_SUMA;}
-{OP_RESTA}		{return OP_RESTA;}
-{OP_DIV}		{return OP_DIV;}
-{OP_MULT}		{return OP_MULT;}
-{OP_MAY}		{return OP_MAY;}
-{OP_MAYEIGU}	{return OP_MAYEIGU;}
-{OP_MEN}		{return OP_MEN;}
-{OP_MENEIGU}	{return OP_MENEIGU;}
-{OP_IGUAL}		{return OP_IGUAL;}
-{OP_DIF}		{return OP_DIF;}
+{OP_RESTA}	{printf("\nOperadores: [%s]\n",yytext);}
+{OP_DIV}    {printf("\nOperadores: [%s]\n",yytext);}
 
-{COMENTARIO} 	
+
 "\n"      		
 "\t"
 " "
