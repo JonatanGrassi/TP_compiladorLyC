@@ -1,0 +1,28 @@
+DECVAR
+var2;var3 : float
+var2;var4;var5 : integer
+ENDDEC
+
+read var;
+if(var1 == var2)
+{
+    if(var1 == var2)
+    {
+        while(NOT var3!=var4)
+        {
+            var1 : var2 + 3;
+        }
+    }
+    else
+    {
+        if(var1 == var2)
+        {
+            while(NOT var3!=var4)
+            {
+            var1 : var2 + 3;
+            }
+        }
+        write "hola que tal";
+        write var1;
+    }
+}

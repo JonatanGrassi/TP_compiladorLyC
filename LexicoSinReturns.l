@@ -34,7 +34,7 @@ CARACTERCOM		@|\?|¿|\*|{LETRA}|{DIGITO}|{ESPACIO}
 CTE_STRING		\".+\"      
 CONST_ENT	({DIGITO})+ 
 CONST_REAL	  ({DIGITO})*"."({DIGITO})+|({DIGITO})+"."({DIGITO})*
-COMENTARIO  	("-")(\/)({CARACTERCOM})*?(("-")(\/)({CARACTERCOM})*(\/)("-"))({CARACTERCOM})*(\/)("-")
+COMENTARIO  	("-")(\/)({CARACTERCOM})*(("-")(\/)({CARACTERCOM})*(\/)("-"))?({CARACTERCOM})*(\/)("-")
 ID			({LETRA})({LETRA}|{DIGITO})*
 
 IF			"if"

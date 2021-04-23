@@ -1,6 +1,6 @@
 flex lexicoSinReturns.l
 gcc lex.yy.c -o tp.exe
-tp.exe prueba.txt
+tp.exe pruebaLexico.txt
 pause
 del lex.yy.c
 del tp.exe
