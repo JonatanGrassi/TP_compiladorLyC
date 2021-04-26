@@ -3,8 +3,11 @@
 #include <stdlib.h>
 #include <conio.h>
 #include "y.tab.h"
+#include "math.h"
 #include <string.h>
 #define LIMITE 30
+#define LIMITEFLOAT 40
+#define LIMITEENT 5
 
 typedef struct{
 char lexema[50];
@@ -24,6 +27,7 @@ int verifRangoCTE_ENT(char*ptr);
 int verifRangoCTE_REAL(char*ptr);
 void colocarEnTablaSimb(char*ptr);
 int verifRangoID(char*ptr);
+int comparaLexemas(char*ptr1,char*ptr2);
 %}
 %option noyywrap  
 %option yylineno 
@@ -40,6 +44,9 @@ COMENTARIO  	("-")(\/)({CARACTERCOM})*(("-")(\/)({CARACTERCOM})*(\/)("-"))?({CAR
 ID			({LETRA})({LETRA}|{DIGITO})*
 
 IF			"if"
+INLIST  "inlist"
+DIV     "DIV"
+MOD     "MOD"
 WHILE		"while"
 DECVAR		"DECVAR"
 ENDDEC		"ENDDEC"
@@ -69,7 +76,8 @@ PAR_A	[(]
 PAR_C	[)]
 LLAV_A	[{]
 LLAV_C	[}]
-
+COR_A   [[]
+COR_C   []]
 PYC		[;]
 
 COMA		[,]
@@ -77,6 +85,9 @@ COMA		[,]
 %%
 	
 {IF}		      {return IF;}
+{INLIST}      {return INLIST;}
+{MOD}         {return MOD;}
+{DIV}         {return DIV;}
 {ELSE}        {return ELSE;}
 {WHILE}       {return WHILE;}
 {DECVAR}	    {return DECVAR;}
@@ -90,7 +101,7 @@ COMA		[,]
 {WRITE}		    {return WRITE;}
 {ELSE}		    {return ELSE;}
 {CONST_ENT}   {verifRangoCTE_ENT(yytext);colocarEnTablaSimb(yytext); return CONST_ENT;}
-{CONST_REAL}  {colocarEnTablaSimb(yytext);return CONST_REAL;}
+{CONST_REAL}  {verifRangoCTE_REAL(yytext);colocarEnTablaSimb(yytext);return CONST_REAL;}
 
 {PAR_A}		{return PAR_A;}
 {ID}	        {colocarEnTablaSimb(yytext);verifRangoID(yytext);return ID;}
@@ -100,6 +111,8 @@ COMA		[,]
 
 
 {PYC}		  {return PYC;}
+{COR_A}   {return COR_A;}
+{COR_C}   {return COR_C;}
 {COMA}			  {return COMA;}
 {CTE_STRING}	{colocarEnTablaSimb(yytext);verifRangoString(yytext);return CTE_STRING;}
 {STRING}      {return STRING;}
@@ -168,35 +181,47 @@ int verifRangoID(char*ptr)
 }
 int verifRangoCTE_ENT(char*ptr)
 { 
-  if(strlen(ptr) > 5 || atoi(ptr) < -32768 || atoi(ptr) > 32767)
+  if(strlen(ptr) > LIMITEENT ||  atoi(ptr) > 32767)   //no hay numeros negativos en el lexico
   { 
      printf("\nla constante (%s) supera el rango permitido\n",ptr);
     return yyerror();
   }
     return 0;
 }
-/*
+
 int verifRangoCTE_REAL(char*ptr)
-{
-  if(strlen(ptr) > 5)
-  { 
-     printf("\nla constante (%s) supera el rango permitido\n",ptr);
-    return yyerror();
-  }
-    return 0;
+{     
+      float num = atof(ptr);
+      if( strlen(ptr) > LIMITEFLOAT  || (num > 3.4*pow(10,38))  || (num < 3.4*pow(10,-38)))
+	      {   
+    
+          printf("\nla constante real (%s) supera el rango permitido\n",ptr);
+          yyerror ();
+        }
+         return 0;    
+     
 }
-*/
 
 void colocarEnTablaSimb(char*ptr)
 {   
-    tablaSimb[cuentaRegs].longitud = strlen(ptr);
-    strcpy(tablaSimb[cuentaRegs].lexema,ptr);
-    cuentaRegs++;
+    int i=0,dupli=0;
+    while(i<cuentaRegs && !dupli)
+    {
+      if(!strcmp(tablaSimb[i].lexema,ptr))
+          dupli=1;
+      i++;
+    }
+    if(!dupli)
+    {
+        tablaSimb[cuentaRegs].longitud = strlen(ptr);
+        strcpy(tablaSimb[cuentaRegs].lexema,ptr);
+        cuentaRegs++;
+    }
 }
 
 int yyerror(void)
-    {
-       printf("Syntax Error\n");
+    { 
+      printf("\nlinea %d: Syntax Error\n",yylineno);
 	    system ("Pause");
 	  exit (1);
      }

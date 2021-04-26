@@ -59,6 +59,8 @@ OP_MEN		[<]
 OP_MENEIGU	"<="
 OP_IGUAL	"=="
 OP_DIF		"!="
+COR_A   [[]
+COR_C   []]
 
 PAR_A	[(]
 PAR_C	[)]
@@ -72,6 +74,8 @@ COMA		[,]
 %%
 {COMENTARIO} 		{printf("\n%s es un comentario\n",yytext);}
 {IF}		      {printf("\nPalabra reservada: [%s]\n",yytext);}
+{COR_A}   {printf("\n corchete abre: [%s]\n",yytext);}
+{COR_C}   {printf("\n corchete cierra: [%s]\n",yytext);}
 {WHILE}		{printf("\nPalabra reservada: [%s]\n",yytext);}
 {DECVAR}	{printf("\nPalabra reservada: [%s]\n",yytext);}
 {ENDDEC}	{printf("\nPalabra reservada: [%s]\n",yytext);}

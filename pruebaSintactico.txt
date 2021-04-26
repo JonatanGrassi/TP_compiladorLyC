@@ -3,6 +3,13 @@ var2;var3 : float
 var2;var4;var5 : integer
 ENDDEC
 
+inlist(a;[2*b+7 ; 12 ; a+b*(34+d) ; 3.33])
+inlist(a;[b])                       
+
+
+var2 : 3.5+2 MOD 4.2*4;
+var3 : 2.1 - 4 DIV 3;
+
 read var;
 if(var1 == var2)
 {
@@ -15,7 +22,7 @@ if(var1 == var2)
     }
     else
     {
-        if(var1 == var2)
+        if(NOT inlist(a;[.99;99.]))
         {
             while(NOT var3!=var4)
             {
@@ -26,3 +33,5 @@ if(var1 == var2)
         write var1;
     }
 }
+
+
