@@ -16,16 +16,16 @@ FILE  *yyin;
 %%
 
 iniciopro: DECVAR declaracion ENDDEC programa  {printf("\nFin analisis sintactico");}
+          | escrituraSinVar 
 
 programa: sentencia 	          
 	      | programa sentencia 
 
 sentencia: asignacion PYC		{printf("\n asignacion correcta");}
-          | ciclo     {printf("\n Ciclo while correcto");}
-          | decisiones   {printf("\n decision correcta");}
-          | escritura PYC  {printf("\n escritura correcta");}
-          | lectura PYC    {printf("\n lectura correcta");}
-          | funcionlist       {printf("\n funcion lista correcta");}
+          | ciclo                   {printf("\n Ciclo while correcto");}
+          | decisiones              {printf("\n decision correcta");}
+          | escritura PYC           {printf("\n escritura correcta");}
+          | lectura PYC             {printf("\n lectura correcta");}         
                
 declaracion: listadeclara
             | declaracion listadeclara
@@ -38,6 +38,11 @@ listvar : listvar PYC ID
 tdato: INTEGER
       | FLOAT
       | STRING
+
+escrituraSinVar: escrituraSinVarSente 
+                 | escrituraSinVar escrituraSinVarSente
+
+escrituraSinVarSente: WRITE CTE_STRING PYC {printf("\n escritura correcta");}
 
 decisiones : IF PAR_A condicion AND condicion PAR_C LLAV_A programa LLAV_C ELSE LLAV_A programa LLAV_C
             | IF PAR_A condicion OR condicion PAR_C LLAV_A programa LLAV_C ELSE LLAV_A programa LLAV_C
@@ -60,7 +65,7 @@ escritura : WRITE ID
 lectura : READ ID 
 
 condicion : opera oplog opera
-            | funcionlist
+            | funcionlist      {printf("\n funcion lista correcta");}
 
 opera: CONST_ENT
       | CONST_REAL
@@ -93,13 +98,13 @@ expresion: termino
 termino:  factor
 		 | termino OP_MULT factor	{printf("\nla multiplicacion es correcta");}
 		 | termino OP_DIV factor	{printf("\nla division es correcta");}
-             | termino MOD factor          {printf("\n modulo correcta");}
-             | termino DIV factor           {printf("\n division entera correcta");}    
 
 factor : CONST_ENT 
 		| ID
             | CONST_REAL
-		| PAR_A expresion PAR_C              
+		| PAR_A expresion PAR_C
+            | PAR_A expresion MOD expresion PAR_C     {printf("\nel modulo es correcto");}
+            | PAR_A expresion DIV expresion PAR_C      {printf("\nla division entera es correcta");}
 		;	
 %%
 
