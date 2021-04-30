@@ -28,6 +28,8 @@ int verifRangoCTE_REAL(char*ptr);
 void colocarEnTablaSimb(char*ptr);
 int verifRangoID(char*ptr);
 int comparaLexemas(char*ptr1,char*ptr2);
+void errorCaracter(char*ptr);
+int yyerror(void);
 %}
 %option noyywrap  
 %option yylineno 
@@ -35,10 +37,10 @@ int comparaLexemas(char*ptr1,char*ptr2);
 LETRA			[A-Za-z]
 DIGITO			[0-9]
 ESPACIO			[" "]
-CARACTERCOM		@|\?|¿|\*|{LETRA}|{DIGITO}|{ESPACIO}
 
 CTE_STRING		\".+\"      
-CONST_ENT	({DIGITO})+ 
+CONST_ENT	({DIGITO})+
+CARACTERCOM		@|\?|\"|\.|\,|\+|\t|\n|\/|\_|\:|\;|¿|\*|{LETRA}|{DIGITO}|{ESPACIO} 
 CONST_REAL	  ({DIGITO})*"."({DIGITO})+|({DIGITO})+"."({DIGITO})*
 COMENTARIO  	("-")(\/)({CARACTERCOM})*(("-")(\/)({CARACTERCOM})*(\/)("-"))?({CARACTERCOM})*(\/)("-")
 ID			({LETRA})({LETRA}|{DIGITO})*
@@ -104,7 +106,7 @@ COMA		[,]
 {CONST_REAL}  {verifRangoCTE_REAL(yytext);colocarEnTablaSimb(yytext);return CONST_REAL;}
 
 {PAR_A}		{return PAR_A;}
-{ID}	        {colocarEnTablaSimb(yytext);verifRangoID(yytext);return ID;}
+{ID}	        {verifRangoID(yytext);colocarEnTablaSimb(yytext);return ID;}
 {PAR_C}		{return PAR_C;}
 {LLAV_A}	{return LLAV_A;}
 {LLAV_C}	{return LLAV_C;}
@@ -114,7 +116,7 @@ COMA		[,]
 {COR_A}   {return COR_A;}
 {COR_C}   {return COR_C;}
 {COMA}			  {return COMA;}
-{CTE_STRING}	{colocarEnTablaSimb(yytext);verifRangoString(yytext);return CTE_STRING;}
+{CTE_STRING}	{verifRangoString(yytext);colocarEnTablaSimb(yytext);return CTE_STRING;}
 {STRING}      {return STRING;}
 
 {OP_ASIG}		{return OP_ASIG;}
@@ -131,10 +133,11 @@ COMA		[,]
 
 {COMENTARIO} 
 
-"\n"      		
-"\t"
+"\r" 
+"\n"
+"\t"		
 " "
-.                  yyerror();
+.                  errorCaracter(yytext);
 %%
 
 int main(int argc,char *argv[])
@@ -174,7 +177,7 @@ int verifRangoID(char*ptr)
 {
   if((strlen(ptr)) > LIMITE)      
   { 
-     printf("\nla cadena (%s) supera el rango permitido\n",ptr);
+     printf("\nLa variable: (%s) supera el rango permitido",ptr);
     return yyerror();
   }
     return 0;
@@ -183,23 +186,26 @@ int verifRangoCTE_ENT(char*ptr)
 { 
   if(strlen(ptr) > LIMITEENT ||  atoi(ptr) > 32767)   //no hay numeros negativos en el lexico
   { 
-     printf("\nla constante (%s) supera el rango permitido\n",ptr);
+     printf("\nLa constante: (%s) supera el rango permitido",ptr);
     return yyerror();
   }
     return 0;
 }
 
 int verifRangoCTE_REAL(char*ptr)
-{     
-      float num = atof(ptr);
-      if( strlen(ptr) > LIMITEFLOAT  || (num > 3.4*pow(10,38))  || (num < 3.4*pow(10,-38)))
+{      
+      if(atof(ptr)>3.40282347e+38F || atof(ptr)<3.40282347e-38F)
 	      {   
-    
           printf("\nla constante real (%s) supera el rango permitido\n",ptr);
           yyerror ();
         }
          return 0;    
      
+}
+void errorCaracter(char*ptr)
+{
+  printf("\nCaracter: (%s) invalido\n",ptr);
+  yyerror();
 }
 
 void colocarEnTablaSimb(char*ptr)
