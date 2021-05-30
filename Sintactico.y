@@ -1,34 +1,55 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <conio.h>
 #include "y.tab.h"
+#include "lib\pila.c"
+#include "lib\funciones.c"
 int yystopparser=0;
 FILE  *yyin;
+char str_aux[50];
+char str_aux2[50];
+int yyerror();
+int yyparse();
+int yylex();
 %}
+
+%union {
+int intval;
+float val;
+char *str_val;
+}
+
+%token <str_val>ID
+%token <int>CONST_ENT
+%token <float>CONST_REAL
+%token <str_val>CTE_STRING
+
 
 %token IF WHILE DECVAR ENDDEC INTEGER FLOAT WRITE ELSE OP_ASIG
 %token OP_SUMA OP_MULT OP_MAY OP_MAYEIGU OP_MEN OP_MENEIGU OP_IGUAL
 %token OP_DIF PAR_A PAR_C LLAV_A LLAV_C OP_RESTA OP_DIV
-%token PYC COMA ID CONST_ENT CONST_REAL CTE_STRING AND NOT OR READ STRING 
+%token PYC COMA AND NOT OR READ STRING 
 %token COR_A COR_C INLIST MOD DIV
 
 %%
 
-iniciopro: DECVAR declaracion ENDDEC programa
+iniciopro: DECVAR declaracion ENDDEC programa   {tree_print_dot(&sentenciaPtr,graph);}
           | escrituraSinVar 
 
-programa: sentencia 	                  {printf("\nREGLA 1: <programa>--><sentencia>\n");}
-	      | programa sentencia          {printf("\nREGLA 2: <sentencia>--><programa> <sentencia>\n");}
+programa: sentencia 	                 
+	      | programa sentencia          
 
-sentencia: asignacion PYC		{printf("\nREGLA 3: <sentencia>--><asignacion> PYC\n");}
+sentencia: asignacion PYC		{sentenciaPtr = asigPtr; 
+                                          printf("\nREGLA 3: <sentencia>--><asignacion> PYC\n");}
           | ciclo                   {printf("\nREGLA 4: <sentencia>--><ciclo>\n");}
           | decisiones              {printf("\nREGLA 5: <sentencia>--><decisiones>\n");}
           | escritura PYC           {printf("\nREGLA 6: <sentencia>--><escritura> PYC\n");}
           | lectura PYC             {printf("\nREGLA 7: <sentencia>--><lectura> PYC\n");}         
                
 declaracion: listadeclara                  {printf("\nREGLA 8: <declaracion>--><listadeclara> PYC\n");}      
-            | declaracion listadeclara      {printf("\nREGLA 9: <declaracion>--><declaracion> <listadeclara> PYC\n");}      
+            | declaracion listadeclara            
 
 listadeclara : listvar OP_ASIG tdato      {printf("\nREGLA 10: <listadeclara>--><listvar> OP_ASIG <tdato>\n");}
 
@@ -40,7 +61,7 @@ tdato: INTEGER                {printf("\nREGLA 13: <tdato>-->INTEGER\n");}
       | STRING                {printf("\nREGLA 15: <tdato>-->STRING\n");}
 
 escrituraSinVar: escrituraSinVarSente {printf("\nREGLA 16: <escrituraSinVar>--><escrituraSinVarSente>\n");}
-                 | escrituraSinVar escrituraSinVarSente {printf("\nREGLA 17: <escrituraSinVar>--><escrituraSinVar> <escrituraSinVarSente>\n");}
+                 | escrituraSinVar escrituraSinVarSente 
 
 escrituraSinVarSente: WRITE CTE_STRING PYC {printf("\nREGLA 18: <escrituraSinVarSente>-->WRITE CTE_STRING PYC\n");}
 
@@ -82,27 +103,47 @@ oplog: OP_MAYEIGU       {printf("\nREGLA 40: <opera>-->OP_MAYEIGU\n");}
 
 funcionlist: INLIST PAR_A ID PYC COR_A list COR_C PAR_C {printf("\nREGLA 46: <funcionlist>-->INLIST PAR_A ID PYC COR_A <list> COR_C PAR_C\n");}
 
-list: list PYC var      {printf("\nREGLA 47: <list>--><list> PYC <var>\n");}
+list: list PYC var      
       | var             {printf("\nREGLA 48: <list>--><var>\n");}
 
 var: expresion           {printf("\nREGLA 49: <list>--><expresion>\n");}
 
-asignacion: ID OP_ASIG expresion	      {printf("\nREGLA 50: <asignacion>-->ID OP_ASIG <expresion>\n");}
-            | ID OP_ASIG CTE_STRING       {printf("\nREGLA 51: <asignacion>-->ID OP_ASIG CTE_STRING\n");}
+asignacion: ID OP_ASIG {strcpy(str_aux2,yylval.str_val);} expresion	      {//sprintf(str_aux, "%d",$1);
+                                                asigPtr = crearNodo("OP_ASIG",crearHoja(str_aux2,CteString),exprPtr) ; 
+                                                      printf("\nREGLA 50: <asignacion>-->ID OP_ASIG <expresion>\n");}
+            | ID OP_ASIG CTE_STRING       {sprintf(str_aux, "%d",$1);
+                                                asigPtr = crearNodo("OP_ASIG",crearHoja(str_aux,CteInt),exprPtr) ;
+                                                      printf("\nREGLA 51: <asignacion>-->ID OP_ASIG CTE_STRING\n");}
             
 		
-expresion: termino                        {printf("\nREGLA 52: <expresion>--><termino>\n");}
-		   | expresion OP_SUMA termino {printf("\nREGLA 53: <expresion>--><expresion> OP_SUMA <termino>\n");}
-		   | expresion OP_RESTA termino {printf("\nREGLA 54: <expresion>--><expresion> OP_RESTA <termino>\n");}
+expresion: termino                        {exprPtr = terminoPtr ; 
+                                                      printf("\nREGLA 52: <expresion>--><termino>\n");}
+		   | expresion OP_SUMA termino {exprPtr = crearNodo("OP_SUMA",exprPtr,terminoPtr);   
+                                                      printf("\nREGLA 53: <expresion>--><expresion> OP_SUMA <termino>\n");}
+		   | expresion OP_RESTA termino {exprPtr = crearNodo("OP_RESTA",exprPtr,terminoPtr);   
+                                                      printf("\nREGLA 54: <expresion>--><expresion> OP_RESTA <termino>\n");}
 		   
 
-termino:  factor                          {printf("\nREGLA 55: <termino>--><factor>\n");}
-		 | termino OP_MULT factor	{printf("\nREGLA 56: <termino>--><termino> OP_MULT <factor>\n");}
-		 | termino OP_DIV factor	{printf("\nREGLA 57: <termino>--><termino> OP_DIV <factor>\n");}
+termino:  factor                          {terminoPtr = factorPtr ; 
+                                                      printf("\nREGLA 55: <termino>--><factor>\n");}
+		 | termino OP_MULT factor	{terminoPtr=crearNodo("OP_MULT",terminoPtr,factorPtr);
+                                                      printf("\nREGLA 56: <termino>--><termino> OP_MULT <factor>\n");}
+		 | termino OP_DIV factor	{terminoPtr=crearNodo("OP_DIV",terminoPtr,factorPtr); 
+                                                      printf("\nREGLA 57: <termino>--><termino> OP_DIV <factor>\n");}
 
-factor : CONST_ENT                         {printf("\nREGLA 58: <factor>-->CONST_ENT\n");}
-		| ID                            {printf("\nREGLA 59: <factor>-->ID\n");}
-            | CONST_REAL                         {printf("\nREGLA 60: <factor>-->CONST_REAL\n");}
+factor : CONST_ENT                         {sprintf(str_aux, "%d",yylval.intval);
+                                                //printf( "cteEntera: %d\n", yylval.intval);
+                                                factorPtr = crearHoja(str_aux ,CteInt) ;
+                                                            printf("\nREGLA 58: <factor>-->CONST_ENT\n");
+                                                                        }
+		| ID                            { printf( "En regla factor es ID, yylval: %s\n", yylval.str_val);
+                                                //sprintf(str_aux, "%s",$1);
+                                                      factorPtr = crearHoja(yylval.str_val,CteString) ;
+                                                            printf("\nREGLA 59: <factor>-->ID\n");
+                                                                  }
+            | CONST_REAL                         {sprintf(str_aux, "%f",yylval.val);
+                                                      factorPtr = crearHoja(str_aux,CteFloat) ;
+                                                            printf("\nREGLA 60: <factor>-->CONST_REAL\n");}
 		| PAR_A expresion PAR_C             {printf("\nREGLA 61: <factor>-->PAR_A <expresion> PAR_C\n");}
             | PAR_A expresion MOD expresion PAR_C      {printf("\nREGLA 62: <factor>-->PAR_A <expresion> MOD <expresion> PAR_C\n");}
             | PAR_A expresion DIV expresion PAR_C       {printf("\nREGLA 63: <factor>-->PAR_A <expresion> DIV <expresion> PAR_C\n");}

@@ -1,0 +1,7 @@
+Lexemas                       	Longitud
+var2                          	4
+var3                          	4
+var4                          	4
+var5                          	4
+var1                          	4
+4                             	1

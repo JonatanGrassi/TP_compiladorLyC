@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <conio.h>
 #include "y.tab.h"
+#include "lib\funciones.h"
 #include "math.h"
 #include <string.h>
 #define LIMITE 30
@@ -19,7 +20,6 @@ int longitud;
 tSimbo tablaSimb[1000];
 FILE  *yyin;
 FILE *tab;
-int yylval;
 int cuentaRegs=0;
 char *yyltext;
 int verifRangoString(char*ptr);
@@ -30,9 +30,13 @@ int verifRangoID(char*ptr);
 int comparaLexemas(char*ptr1,char*ptr2);
 void errorCaracter(char*ptr);
 int yyerror(void);
+int yyparse();
+int yylex();
 %}
 %option noyywrap  
 %option yylineno 
+
+
 
 LETRA			[A-Za-z]
 DIGITO			[0-9]
@@ -102,11 +106,11 @@ COMA		[,]
 {FLOAT}		    {return FLOAT;}
 {WRITE}		    {return WRITE;}
 {ELSE}		    {return ELSE;}
-{CONST_ENT}   {verifRangoCTE_ENT(yytext);colocarEnTablaSimb(yytext); return CONST_ENT;}
-{CONST_REAL}  {verifRangoCTE_REAL(yytext);colocarEnTablaSimb(yytext);return CONST_REAL;}
+{CONST_ENT}   {yylval.intval = atoi(yytext) ;verifRangoCTE_ENT(yytext);colocarEnTablaSimb(yytext); return CONST_ENT;}
+{CONST_REAL}  {yylval.val = atof(yytext); verifRangoCTE_REAL(yytext);colocarEnTablaSimb(yytext);return CONST_REAL;}
 
 {PAR_A}		{return PAR_A;}
-{ID}	        {verifRangoID(yytext);colocarEnTablaSimb(yytext);return ID;}
+{ID}	        {yylval.str_val = yytext; verifRangoID(yytext);colocarEnTablaSimb(yytext);return ID;}
 {PAR_C}		{return PAR_C;}
 {LLAV_A}	{return LLAV_A;}
 {LLAV_C}	{return LLAV_C;}
@@ -116,7 +120,7 @@ COMA		[,]
 {COR_A}   {return COR_A;}
 {COR_C}   {return COR_C;}
 {COMA}			  {return COMA;}
-{CTE_STRING}	{verifRangoString(yytext);colocarEnTablaSimb(yytext);return CTE_STRING;}
+{CTE_STRING}	{yylval.str_val = yytext; verifRangoString(yytext);colocarEnTablaSimb(yytext);return CTE_STRING;}
 {STRING}      {return STRING;}
 
 {OP_ASIG}		{return OP_ASIG;}
@@ -152,6 +156,11 @@ int main(int argc,char *argv[])
         printf("\nNo se puedo crear el archivo tabla_de_simbolos.bin\n");
       return 1;
       }
+  if ((graph = fopen("graph.dot", "wt")) == NULL)
+          {
+            printf("\nNo se puede abrir el archivo \n");
+            return 1;
+          }
 	yyparse();
   fprintf(tab,"%-*s\t%s\n",LIMITE,"Lexemas","Longitud");
   int i;

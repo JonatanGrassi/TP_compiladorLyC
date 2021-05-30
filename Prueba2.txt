@@ -1,0 +1,6 @@
+DECVAR
+var2;var3 : float
+var2;var4;var5 : integer
+ENDDEC
+
+var2 : var1*4 + var3 ;
