@@ -7,162 +7,302 @@ extern int varADeclarar1;
 extern int cantVarsADeclarar;
 extern int tipoDatoADeclarar[TAMANIO_TABLA];
 extern int indiceDatoADeclarar;
-extern int indice_tabla;
 extern int auxOperaciones;
 char msg[100];
 char aux_str[41];
 
-
-tNodo* crearNodo(const char* dato, tNodo *pIzq, tNodo *pDer){
-    
-    tNodo* nodo = malloc(sizeof(tNodo));   
-    tInfo info;
-    strcpy(info.dato, dato);
-    nodo->info = info;
-    nodo->izq = pIzq;
-    nodo->der = pDer;
-
-    return nodo;
+void grabarTablaSim()
+{
+	fprintf(tab, "%-*s\t%-*s\t%s\n", LIMITE, "Lexemas", LIMITE, "tipoDedato", "Longitud");
+	int i;
+	for (i = 0; i < cuentaRegs; i++)
+	{
+		fprintf(tab, "%-*s\t%-*d\t%d\n", LIMITE, tablaSimb[i].lexema, LIMITE, tablaSimb[i].tipoDeDato, tablaSimb[i].longitud);
+	}
 }
 
-tNodo* crearHoja(char* dato,int tipo){	
-    tNodo* nodoNuevo = (tNodo*)malloc(sizeof(tNodo));
+void colocarEnTablaSimb(char *ptr, int esCte, int linea)
+{
+	int i = 0, dupli = 0;
+	while (i < cuentaRegs && !dupli)
+	{
+		if (!strcmp(tablaSimb[i].lexema, ptr))
+			dupli = 1;
+		i++;
+	}
+	if (!dupli)
+	{
+		tablaSimb[cuentaRegs].longitud = strlen(ptr);
+		strcpy(tablaSimb[cuentaRegs].lexema, ptr);
+		if (esCte)
+			strcpy(tablaSimb[cuentaRegs].valor, ptr);
+		cuentaRegs++;
+	}
+	else
+	{
+		if (!esCte)
+		{
+			sprintf(msg, "'%s' ya se encuentra declarada previamente.", ptr);
+			mensajeDeError(ErrorSintactico, msg, linea);
+		}
+	}
+}
+
+int chequearVarEnTabla(char *lexema, int linea)
+{
+	int pos = 0;
+	pos = buscarEnTabla(lexema);
+	//Si no existe en la tabla, error
+	if (pos == -1)
+	{
+		sprintf(msg, "La variable '%s' debe ser declarada previamente en la seccion de declaracion de variables", lexema);
+		mensajeDeError(ErrorSintactico, msg, linea);
+	}
+	//Si existe en la tabla, dejo que la compilacion siga
+	return pos;
+}
+
+int buscarEnTabla(char *nombre)
+{
+	int i = 0, pos = -1;
+	while (i < cuentaRegs)
+	{
+		if (!strcmp(tablaSimb[i].lexema, nombre))
+		{
+			pos = i;
+		}
+		i++;
+	}
+	return pos;
+}
+
+void mensajeDeError(enum tipoError error, const char *info, int linea)
+{
+	switch (error)
+	{
+	case ErrorLexico:
+		printf("ERROR Lexico en la linea %d. Descripcion: %s\n", linea, info);
+		break;
+
+	case ErrorSintactico:
+		printf("ERROR Sintactico en la linea %d. Descripcion: %s.\n", linea, info);
+		break;
+	}
+	system("Pause");
+	exit(1);
+}
+
+void agregarTiposDatosCte(int tDato)
+{
+	tablaSimb[cuentaRegs - 1].tipoDeDato = tDato;
+}
+
+void agregarTipoDeDatoVarAtabla(int tDato)
+{
+	int i = 0, actual = 0;
+	while (actual < _cantIds)
+	{
+		tablaSimb[cuentaRegs - actual - 1].tipoDeDato = tDato;
+		actual++;
+	}
+}
+
+void agregarTipoDeDatoCte(tPila *pilaIds, int tDato)
+{
+	int i = 0, actual = 0;
+	while (actual < _cantIds)
+	{
+		tablaSimb[cuentaRegs - actual - 1].tipoDeDato = tDato;
+		actual++;
+	}
+}
+
+void grabarTabla()
+{
+	int i;
+	fprintf(tab, "%-30s|%-30s|%-30s|%s\n", "NOMBRE", "TIPO", "VALOR", "LONGITUD");
+	fprintf(tab, "---------------------------------------------------------------------------------------------------------------------------------------------\n");
+	for (i = 0; i <= cuentaRegs; i++)
+	{
+		fprintf(tab, "%-30s", tablaSimb[i].lexema);
+		switch (tablaSimb[i].tipoDeDato)
+		{
+		case Float:
+			fprintf(tab, "|%-30s|%-30s|%d", "FLOAT", "--", tablaSimb[i].longitud);
+			break;
+		case Integer:
+			fprintf(tab, "|%-30s|%-30s|%d", "INTEGER", "--", tablaSimb[i].longitud);
+			break;
+		case String:
+			fprintf(tab, "|%-30s|%-30s|%d", "STRING", "--", tablaSimb[i].longitud);
+			break;
+		case CteFloat:
+			fprintf(tab, "|%-30s|%-30s|%d", "CTE_FLOAT", tablaSimb[i].valor, tablaSimb[i].longitud);
+			break;
+		case CteInt:
+			fprintf(tab, "|%-30s|%-30s|%d", "CTE_INT", tablaSimb[i].valor, tablaSimb[i].longitud);
+			break;
+		case CteString:
+			fprintf(tab, "|%-30s|%-30s|%d", "CTE_STRING", tablaSimb[i].valor, tablaSimb[i].longitud);
+			break;
+		}
+		fprintf(tab, "\n");
+	}
+	fclose(tab);
+}
+
+int verifRangoString(char *ptr, int linea)
+{
+	if ((strlen(ptr) - 2) > LIMITE) //-2 para que no cuente las comillas
+	{
+		sprintf(msg, "la cadena (%s) supera el rango permitido", ptr);
+		mensajeDeError(ErrorLexico, msg, linea);
+		//printf("\nla cadena (%s) supera el rango permitido\n", ptr);
+		//return yyerror();
+	}
+	return 0;
+}
+int verifRangoID(char *ptr, int linea)
+{
+	if ((strlen(ptr)) > LIMITE)
+	{
+		sprintf(msg, "La variable: %s supera el rango permitido", ptr);
+		mensajeDeError(ErrorLexico, msg, linea);
+		//printf("\nLa variable: (%s) supera el rango permitido", ptr);
+		//return yyerror();
+	}
+	return 0;
+}
+int verifRangoCTE_ENT(char *ptr, int linea)
+{
+	if (strlen(ptr) > LIMITEENT || atoi(ptr) > 32767) //no hay numeros negativos en el lexico
+	{
+		sprintf(msg, "La constante: %s supera el rango permitido", ptr);
+		mensajeDeError(ErrorLexico, msg, linea);
+		//printf("\nLa constante: (%s) supera el rango permitido", ptr);
+		//return yyerror();
+	}
+	return 0;
+}
+
+int verifRangoCTE_REAL(char *ptr, int linea)
+{
+	if (atof(ptr) > 3.40282347e+38F || atof(ptr) < 3.40282347e-38F)
+	{
+		sprintf(msg, "la constante real: %s supera el rango permitido", ptr);
+		mensajeDeError(ErrorLexico, msg, linea);
+		//printf("\nla constante real (%s) supera el rango permitido\n", ptr);
+		//yyerror();
+	}
+	return 0;
+}
+void errorCaracter(char *ptr, int linea)
+{
+	sprintf(msg, "Caracter: %s invalido", ptr);
+	mensajeDeError(ErrorLexico, msg, linea);
+	//printf("\nCaracter: (%s) invalido\n", ptr);
+	//yyerror();
+}
+
+tNodo *crearNodo(const char *dato, tNodo *pIzq, tNodo *pDer)
+{
+
+	tNodo *nodo = malloc(sizeof(tNodo));
+	tInfo info;
+	strcpy(info.dato, dato);
+	nodo->info = info;
+	nodo->izq = pIzq;
+	nodo->der = pDer;
+
+	return nodo;
+}
+
+tNodo *crearHoja(char *dato, int tipo)
+{
+	tNodo *nodoNuevo = (tNodo *)malloc(sizeof(tNodo));
 
 	strcpy(nodoNuevo->info.dato, dato);
 	nodoNuevo->info.tipoDato = tipo;
-    nodoNuevo->izq = NULL;
-    nodoNuevo->der = NULL;
+	nodoNuevo->izq = NULL;
+	nodoNuevo->der = NULL;
 
-    return nodoNuevo;
+	return nodoNuevo;
 }
 
-tArbol * hijoMasIzq(tArbol *p){
-    if(*p){
-        if((*p)->izq)
-            return hijoMasIzq(&(*p)->izq);
-        else
-            return p;
-    }
-    return NULL;
+tArbol *hijoMasIzq(tArbol *p)
+{
+	if (*p)
+	{
+		if ((*p)->izq)
+			return hijoMasIzq(&(*p)->izq);
+		else
+			return p;
+	}
+	return NULL;
 }
 
-void enOrden(tArbol *p){
-    if (*p)
-    {
-        enOrden(&(*p)->izq);
-        verNodo((*p)->info.dato);
-        enOrden(&(*p)->der);
-    }
-}
-
-void postOrden(tArbol *p){
-    if (*p){
-        postOrden(&(*p)->izq);
-        postOrden(&(*p)->der);
+void enOrden(tArbol *p)
+{
+	if (*p)
+	{
+		enOrden(&(*p)->izq);
 		verNodo((*p)->info.dato);
-    }
+		enOrden(&(*p)->der);
+	}
 }
 
-void verNodo(const char *p){
-    printf("%s ", p);
+void postOrden(tArbol *p)
+{
+	if (*p)
+	{
+		postOrden(&(*p)->izq);
+		postOrden(&(*p)->der);
+		verNodo((*p)->info.dato);
+	}
 }
 
-
-void _tree_print_dot_subtree(int nro_padre, tNodo *padre, int nro, tArbol *nodo, FILE* stream){
-    if (*nodo != NULL)
-    {    
-        fprintf(stream, "x%d [label=<%s>];\n",nro,(*nodo)->info.dato);
-        if (padre != NULL){
-            fprintf(stream, "x%d -> x%d;\n",nro_padre,nro);
-        }   
-        _tree_print_dot_subtree(nro, *nodo, 2 * nro + 1, &(*nodo)->izq, stream);
-        _tree_print_dot_subtree(nro, *nodo, 2 * nro + 2, &(*nodo)->der, stream);
-        
-    }
+void verNodo(const char *p)
+{
+	printf("%s ", p);
 }
 
-void tree_print_dot(tArbol *p,FILE* stream){
-    fprintf(stream, "digraph BST {\n");
-    if (*p)
-        _tree_print_dot_subtree(-1, NULL, 0, &(*p), stream);
-    fprintf(stream, "}");
+void _tree_print_dot_subtree(int nro_padre, tNodo *padre, int nro, tArbol *nodo, FILE *stream)
+{
+	if (*nodo != NULL)
+	{
+		fprintf(stream, "x%d [label=<%s>];\n", nro, (*nodo)->info.dato);
+		if (padre != NULL)
+		{
+			fprintf(stream, "x%d -> x%d;\n", nro_padre, nro);
+		}
+		_tree_print_dot_subtree(nro, *nodo, 2 * nro + 1, &(*nodo)->izq, stream);
+		_tree_print_dot_subtree(nro, *nodo, 2 * nro + 2, &(*nodo)->der, stream);
+	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*	
-void mensajeDeError(enum tipoError error,const char* info, int linea){
-  switch(error){ 
-        case ErrorLexico: 
-            printf("ERROR Lexico en la linea %d. Descripcion: %s\n",linea,info);
-            break ;
-
-		case ErrorSintactico: 
-            printf("ERROR Sintactico en la linea %d. Descripcion: %s.\n",linea,info);
-            break ;
-  }
-
-  system ("Pause");
-  exit (1);
+void tree_print_dot(tArbol *p, FILE *stream)
+{
+	fprintf(stream, "digraph BST {\n");
+	if (*p)
+		_tree_print_dot_subtree(-1, NULL, 0, &(*p), stream);
+	fprintf(stream, "}");
 }
 
-
-// Devuleve la posicion en la que se encuentra el elemento buscado, -1 si no encontro el elemento 
-int buscarEnTabla(char * nombre){
-   int i=0;
-   while(i<=indice_tabla){
-	   if(strcmp(tabla_simbolo[i].nombre,normalizarId(nombre)) == 0){
-		   return i;
-	   }
-	   i++;
-   }
-   return -1;
+void crearNodoCMP(char *comp)
+{
+	comparacionPtr = crearNodo("CMP", exprCMPPtr, exprPtr);
+	comparacionPtr = crearNodo(comp, comparacionPtr, NULL);
 }
 
+// Devuleve la posicion en la que se encuentra el elemento buscado, -1 si no encontro el elemento
+
+/*
 int yyerror(char* mensaje){
 	printf("Syntax Error: %s\n", mensaje);
 	system ("Pause");
 	exit (1);
  }
 
- void agregarVarATabla(char* nombre,int esCteConNombre,int linea){
-	 //Si se llena, error
-	 if(indice_tabla >= TAMANIO_TABLA - 1){
-		 printf("Error: No hay mas espacio en la tabla de simbolos.\n");
-		 system("Pause");
-		 exit(2);
-	 }
-	 //Si no hay otra variable con el mismo nombre...
-	 if(buscarEnTabla(nombre) == -1){
-		 //Agregar a tabla
-		 indice_tabla ++;
-		 tabla_simbolo[indice_tabla].esCteConNombre = esCteConNombre; 
-		 strcpy(tabla_simbolo[indice_tabla].nombre,normalizarId(nombre));
-	 }
-	 else 
-	 {
-	 	sprintf(msg,"'%s' ya se encuentra declarada previamente.", nombre);
-	 	mensajeDeError(ErrorSintactico,msg,linea);
-	}
- }
 
  // Agrega los tipos de datos a las variables declaradas. Usa las variables globales varADeclarar1, cantVarsADeclarar y tipoDatoADeclarar
 void agregarTiposDatosATabla(){
@@ -336,17 +476,7 @@ void agregarCteATabla(int num){
 }
 
 // Se fija si ya existe una entrada con ese nombre en la tabla de simbolos. Si no existe, muestra un error de variable sin declarar y aborta la compilacion. 
-int chequearVarEnTabla(char* nombre,int linea){
-	int pos=0;
-	pos=buscarEnTabla(nombre);
-	//Si no existe en la tabla, error
-	if( pos == -1){
-		sprintf(msg,"La variable '%s' debe ser declarada previamente en la seccion de declaracion de variables", nombre);
-		mensajeDeError(ErrorSintactico,msg,linea);
-	}
-	//Si existe en la tabla, dejo que la compilacion siga
-	return pos;
-}
+
 
 void validarCteEnTabla(char* nombre,int linea){
 	int pos = buscarEnTabla(nombre); 
@@ -453,28 +583,4 @@ int resolverTipoDatoMaximo(int tipo){
 		return Float;
 	return SinTipo;
 }
-
-void crearNodoCMP(char * comp){
-	comparacionPtr = crearNodo("CMP",exprCMPPtr,exprPtr);
-	comparacionPtr = crearNodo(comp,comparacionPtr,NULL);
-}
-
-void agregarValorACte(int tipo){
-	switch (tipo){
-		case CteInt:{
-			tabla_simbolo[indice_tabla].valor_i = tabla_simbolo[indice_tabla - 1].valor_i;
-			break;
-		}
-		case CteFloat:{
-			tabla_simbolo[indice_tabla].valor_f = tabla_simbolo[indice_tabla - 1].valor_f;
-			break;
-		}
-		case CteString:{
-			strcpy(tabla_simbolo[indice_tabla].valor_s, tabla_simbolo[indice_tabla -1].valor_s);
-		break;	
-		}
-	}
-}
 */
-
-

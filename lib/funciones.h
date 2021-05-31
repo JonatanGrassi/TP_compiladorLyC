@@ -8,7 +8,6 @@ enum tipoError
 };
 /* Tipos de datos para la tabla de simbolos */
 #define Integer 1
-FILE *graph;
 #define Float 2
 #define String 3
 #define CteInt 4
@@ -21,12 +20,15 @@ FILE *graph;
 #define FALSE 0
 #define PILA_VAC 0
 #define MIN(x,y) ((x<y)?x:y)
+#define LIMITE 30
+#define LIMITEFLOAT 40
+#define LIMITEENT 5
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-#define TAMANIO_TABLA 300
+#define TAMANIO_TABLA 1000
 #define TAM_NOMBRE 32
 #define ES_CTE_CON_NOMBRE 1
 /* Defino estructura de informacion para el arbol*/
@@ -45,24 +47,57 @@ typedef struct sNodo{
 typedef tNodo* tArbol;
 tInfo infoArbol;
 
-typedef struct {
-		char nombre[TAM_NOMBRE];
-		int tipo_dato;
-		char valor_s[TAM_NOMBRE];
-		float valor_f;
-		int valor_i;
-		int longitud;
-		int esCteConNombre;
-} TS_Reg;
+FILE *graph;
+FILE *tab;
 
-TS_Reg tabla_simbolo[TAMANIO_TABLA];
 
+typedef struct{
+char lexema[50];
+int tipoDeDato;
+char valor[100];
+int longitud;
+}tSimbo;
+
+tSimbo tablaSimb[TAMANIO_TABLA];
+int cuentaRegs;
+int _cantIds;
+
+int verifRangoString(char*ptr,int linea);
+int verifRangoCTE_ENT(char*ptr,int linea);
+int verifRangoCTE_REAL(char*ptr,int linea);
+void colocarEnTablaSimb(char*ptr,int esCte,int linea);
+int verifRangoID(char*ptr,int linea);
+int comparaLexemas(char*ptr1,char*ptr2);
+void errorCaracter(char*ptr,int linea);
+void grabarTablaSim();
+void agregarTipoDeDatoVarAtabla(int tDato);
+void agregarTiposDatosCte(int tDato);
+int chequearVarEnTabla(char* nombre,int linea);
 void mensajeDeError(enum tipoError error,const char* info, int linea);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void agregarVarATabla(char* nombre,int esCteConNombre,int linea);
-void agregarTiposDatosATabla(void);
+
 void agregarCteATabla(int num);
 void agregarEnTabla(char* nombre,int linea,int tipo);
-int chequearVarEnTabla(char* nombre,int linea);
+
 int verificarTipoDato(tArbol * p,int linea);
 void verificarTipo(tArbol* p,int tipoAux,int linea);
 int verificarCompatible(int tipo,int tipoAux);
@@ -94,7 +129,6 @@ tArbol 	asigPtr,			//Puntero de asignaciones
 		exprAritPtr,		//Puntero de expresiones aritmeticas
 		terminoPtr,			//Puntero de terminos
 		factorPtr,			//Puntero de factores
-		bloquePtr,			//Puntero de bloque
 		sentenciaPtr,		//Puntero de sentencia	
 		bloqueWhPtr,		//Puntero de bloque de While	
 		listaExpComaPtr,	//Puntero de lista expresion coma
@@ -107,11 +141,6 @@ tArbol 	asigPtr,			//Puntero de asignaciones
 		auxIfPtr,
 		escrituraPtr,
 		declConstantePtr,	//Puntero decl_constante
-		auxMaximoHojaPtr,	//Puntero del Maximo
-		auxMaxSelNodo,		//Puntero del Maximo
-		auxMaxAsigNodo,		//Puntero del Maximo
-		auxMaxIFNodo,		//Puntero del Maximo
-		auxMaxNodoAnterior,	//Puntero del Maximo
 		exprCMPPtr,
 		seleccionPtr,
 		seleccionIFPtr,
@@ -125,9 +154,13 @@ tArbol 	asigPtr,			//Puntero de asignaciones
 		exprMaximoPtr,
 		auxEtiqPtr,
 		auxWhilePtr,
-		auxMaxCond;
+		auxMaxCond,
+		operDerPtr,
+		operIzqPtr;
 
 //PILA
+
+
 
 typedef struct sNodoP
 {
@@ -136,6 +169,10 @@ typedef struct sNodoP
     struct sNodoP   *sig;
 } tNodoP;
 typedef tNodoP *tPila;
+
+tPila pilaExpresion;
+tPila pilaOperadoresCond;
+
 
 void crearPila(tPila *p);
 int  pilaLlena(const tPila *p, unsigned cantBytes);

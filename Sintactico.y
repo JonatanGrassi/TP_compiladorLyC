@@ -8,13 +8,15 @@
 #include "lib\funciones.c"
 int yystopparser=0;
 FILE  *yyin;
+extern int yylineno;
 char str_aux[50];
 char str_aux2[50];
+char compara[10];
+int auxDato;
 int yyerror();
 int yyparse();
 int yylex();
 %}
-
 %union {
 int intval;
 float val;
@@ -35,7 +37,7 @@ char *str_val;
 
 %%
 
-iniciopro: DECVAR declaracion ENDDEC programa   {tree_print_dot(&sentenciaPtr,graph);}
+iniciopro: DECVAR declaracion ENDDEC programa   {grabarTabla();tree_print_dot(&sentenciaPtr,graph);}
           | escrituraSinVar 
 
 programa: sentencia 	                 
@@ -46,34 +48,35 @@ sentencia: asignacion PYC		{sentenciaPtr = asigPtr;
           | ciclo                   {printf("\nREGLA 4: <sentencia>--><ciclo>\n");}
           | decisiones              {printf("\nREGLA 5: <sentencia>--><decisiones>\n");}
           | escritura PYC           {printf("\nREGLA 6: <sentencia>--><escritura> PYC\n");}
-          | lectura PYC             {printf("\nREGLA 7: <sentencia>--><lectura> PYC\n");}         
+          | lectura PYC             {printf("\nREGLA 7: <sentencia>--><lectura> PYC\n");}
+               
                
 declaracion: listadeclara                  {printf("\nREGLA 8: <declaracion>--><listadeclara> PYC\n");}      
             | declaracion listadeclara            
 
-listadeclara : listvar OP_ASIG tdato      {printf("\nREGLA 10: <listadeclara>--><listvar> OP_ASIG <tdato>\n");}
+listadeclara : {_cantIds=0;} listvar OP_ASIG tdato      {agregarTipoDeDatoVarAtabla(auxDato);printf("\nREGLA 10: <listadeclara>--><listvar> OP_ASIG <tdato>\n");}
 
-listvar : listvar PYC ID             {printf("\nREGLA 11: <listvar>--><listvar> PYC ID\n");}
-        | ID                        {printf("\nREGLA 12: <listvar>-->ID\n");}
+listvar : listvar PYC ID             {_cantIds++;colocarEnTablaSimb($<str_val>3,0,yylineno);printf("\nREGLA 11: <listvar>--><listvar> PYC ID\n");}
+        | ID                        {_cantIds++;colocarEnTablaSimb($<str_val>1,0,yylineno);printf("\nREGLA 12: <listvar>-->ID\n");}
 
-tdato: INTEGER                {printf("\nREGLA 13: <tdato>-->INTEGER\n");}
-      | FLOAT                 {printf("\nREGLA 14: <tdato>-->FLOAT\n");}
-      | STRING                {printf("\nREGLA 15: <tdato>-->STRING\n");}
+tdato: INTEGER                {auxDato = Integer ;printf("\nREGLA 13: <tdato>-->INTEGER\n");}
+      | FLOAT                 {auxDato = Float ;printf("\nREGLA 14: <tdato>-->FLOAT\n");}
+      | STRING                {auxDato = String ;printf("\nREGLA 15: <tdato>-->STRING\n");}
 
 escrituraSinVar: escrituraSinVarSente {printf("\nREGLA 16: <escrituraSinVar>--><escrituraSinVarSente>\n");}
                  | escrituraSinVar escrituraSinVarSente 
 
 escrituraSinVarSente: WRITE CTE_STRING PYC {printf("\nREGLA 18: <escrituraSinVarSente>-->WRITE CTE_STRING PYC\n");}
 
-decisiones : IF PAR_A condicion AND condicion PAR_C LLAV_A programa LLAV_C ELSE LLAV_A programa LLAV_C {printf("\nREGLA 20: <decisiones>-->IF PAR_A <condicion> AND <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}
-            | IF PAR_A condicion OR condicion PAR_C LLAV_A programa LLAV_C ELSE LLAV_A programa LLAV_C {printf("\nREGLA 21: <decisiones>-->IF PAR_A <condicion> OR <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}
-            | IF PAR_A NOT condicion PAR_C LLAV_A programa LLAV_C ELSE LLAV_A programa LLAV_C {printf("\nREGLA 22: <decisiones>-->IF PAR_A NOT <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}
-            | IF PAR_A condicion PAR_C LLAV_A programa LLAV_C ELSE LLAV_A programa LLAV_C {printf("\nREGLA 23: <decisiones>-->IF PAR_A <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}
-            | IF PAR_A condicion AND condicion PAR_C LLAV_A programa LLAV_C  {printf("\nREGLA 24: <decisiones>-->IF PAR_A <condicion> AND <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
-            | IF PAR_A condicion OR condicion PAR_C LLAV_A programa LLAV_C {printf("\nREGLA 25: <decisiones>-->IF PAR_A <condicion> OR <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
+decisiones : IF PAR_A condicion conectLog condicion PAR_C LLAV_A programa LLAV_C ELSE LLAV_A programa LLAV_C {printf("\nREGLA 20: <decisiones>-->IF PAR_A <condicion> <conectLog> <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}
+            | IF PAR_A NOT condicion  PAR_C LLAV_A programa LLAV_C ELSE LLAV_A programa LLAV_C {printf("\nREGLA 22: <decisiones>-->IF PAR_A NOT <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}
+            | IF PAR_A condicion  PAR_C LLAV_A programa LLAV_C ELSE LLAV_A programa LLAV_C {printf("\nREGLA 23: <decisiones>-->IF PAR_A <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}
+            | IF PAR_A condicion  conectLog condicion PAR_C LLAV_A programa LLAV_C  {printf("\nREGLA 24: <decisiones>-->IF PAR_A <condicion> <conectLog> <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
             | IF PAR_A NOT condicion PAR_C LLAV_A programa LLAV_C  {printf("\nREGLA 26: <decisiones>-->IF PAR_A NOT <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
-            | IF PAR_A condicion PAR_C LLAV_A programa LLAV_C  {printf("\nREGLA 27: <decisiones>-->IF PAR_A <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
-            
+            | IF PAR_A condicion  PAR_C LLAV_A programa LLAV_C  {printf("\nREGLA 27: <decisiones>-->IF PAR_A <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
+
+conectLog: AND
+           OR       
 
 ciclo : WHILE PAR_A condicion AND condicion PAR_C LLAV_A programa LLAV_C {printf("\nREGLA 28: <ciclo>-->WHILE PAR_A <condicion> AND <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
         | WHILE PAR_A condicion OR condicion PAR_C LLAV_A programa LLAV_C {printf("\nREGLA 29: <ciclo>-->WHILE PAR_A <condicion> OR <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
@@ -85,20 +88,32 @@ escritura : WRITE ID          {printf("\nREGLA 32: <escritura>-->WRITE ID\n");}
 
 lectura : READ ID             {printf("\nREGLA 34: <lectura>-->READ ID\n");}
 
-condicion : opera oplog opera   {printf("\nREGLA 35:<condicion>--><opera> <oplog> <opera>\n");}
+condicion : opera oplog opera   {sacarDePila(&pilaOperadoresCond,&operDerPtr,sizeof(tArbol));
+                                    sacarDePila(&pilaOperadoresCond,&operIzqPtr,sizeof(tArbol));
+                                    condicionPtr=crearNodo(compara,operIzqPtr,operDerPtr);
+                                    printf("\nREGLA 35:<condicion>--><opera> <oplog> <opera>\n");}
             | funcionlist      {printf("\nREGLA 36:<condicion>--><funcionList>\n");}
 
-opera: CONST_ENT        {printf("\nREGLA 37: <opera>-->CONST_ENT\n");}
-      | CONST_REAL      {printf("\nREGLA 38: <opera>-->CONST_REAL\n");}
-      | ID              {printf("\nREGLA 39: <opera>-->ID\n");}
+opera: CONST_ENT        {ponerEnPila(&pilaOperadoresCond,crearHoja($<str_val>1,CteInt),sizeof(tArbol));
+                              printf("\nREGLA 37: <opera>-->CONST_ENT\n");}
+      | CONST_REAL      {ponerEnPila(&pilaOperadoresCond,crearHoja($<str_val>1,CteFloat),sizeof(tArbol));
+                              printf("\nREGLA 38: <opera>-->CONST_REAL\n");}
+      | ID              {ponerEnPila(&pilaOperadoresCond,crearHoja($<str_val>1,CteString),sizeof(tArbol));
+                              printf("\nREGLA 39: <opera>-->ID\n");}
       ;
 
-oplog: OP_MAYEIGU       {printf("\nREGLA 40: <opera>-->OP_MAYEIGU\n");}
-    | OP_MENEIGU         {printf("\nREGLA 41: <opera>-->OP_MENEIGU\n");}
-    | OP_IGUAL             {printf("\nREGLA 42: <opera>-->OP_IGUAL\n");}
-    | OP_MAY              {printf("\nREGLA 43: <opera>-->OP_MAY\n");}
-    | OP_MEN             {printf("\nREGLA 44: <opera>-->OP_MEN\n");}
-    | OP_DIF             {printf("\nREGLA 45: <opera>-->OP_DIF\n");}
+oplog: OP_MAYEIGU       {strcpy(compara,"BLT");
+                              printf("\nREGLA 40: <opera>-->OP_MAYEIGU\n");}
+    | OP_MENEIGU         {strcpy(compara,"BGT");
+                              printf("\nREGLA 41: <opera>-->OP_MENEIGU\n");}
+    | OP_IGUAL             {strcpy(compara,"BNE");
+                              printf("\nREGLA 42: <opera>-->OP_IGUAL\n");}
+    | OP_MAY              {strcpy(compara,"BLE");
+                              printf("\nREGLA 43: <opera>-->OP_MAY\n");}
+    | OP_MEN             {strcpy(compara,"BGE");
+                              printf("\nREGLA 44: <opera>-->OP_MEN\n");}
+    | OP_DIF             {strcpy(compara,"BNQ");
+                              printf("\nREGLA 45: <opera>-->OP_DIF\n");}
     ;
 
 funcionlist: INLIST PAR_A ID PYC COR_A list COR_C PAR_C {printf("\nREGLA 46: <funcionlist>-->INLIST PAR_A ID PYC COR_A <list> COR_C PAR_C\n");}
@@ -108,11 +123,14 @@ list: list PYC var
 
 var: expresion           {printf("\nREGLA 49: <list>--><expresion>\n");}
 
-asignacion: ID OP_ASIG {strcpy(str_aux2,yylval.str_val);} expresion	      {//sprintf(str_aux, "%d",$1);
-                                                asigPtr = crearNodo("OP_ASIG",crearHoja(str_aux2,CteString),exprPtr) ; 
+asignacion: ID OP_ASIG {strcpy(str_aux2,$<str_val>1);} expresion	    
+                                                {     
+                                                      chequearVarEnTabla($<str_val>1,yylineno);
+                                                      asigPtr = crearNodo("OP_ASIG",crearHoja(str_aux2,CteString),exprPtr) ; 
                                                       printf("\nREGLA 50: <asignacion>-->ID OP_ASIG <expresion>\n");}
-            | ID OP_ASIG CTE_STRING       {sprintf(str_aux, "%d",$1);
-                                                asigPtr = crearNodo("OP_ASIG",crearHoja(str_aux,CteInt),exprPtr) ;
+            | ID OP_ASIG {strcpy(str_aux2,$<str_val>1);} CTE_STRING       
+                                                {     chequearVarEnTabla($<str_val>1,yylineno);
+                                                      asigPtr = crearNodo("OP_ASIG",crearHoja(str_aux2,CteString),crearHoja($<str_val>4,CteString)) ;
                                                       printf("\nREGLA 51: <asignacion>-->ID OP_ASIG CTE_STRING\n");}
             
 		
@@ -132,21 +150,21 @@ termino:  factor                          {terminoPtr = factorPtr ;
                                                       printf("\nREGLA 57: <termino>--><termino> OP_DIV <factor>\n");}
 
 factor : CONST_ENT                         {sprintf(str_aux, "%d",yylval.intval);
-                                                //printf( "cteEntera: %d\n", yylval.intval);
                                                 factorPtr = crearHoja(str_aux ,CteInt) ;
                                                             printf("\nREGLA 58: <factor>-->CONST_ENT\n");
                                                                         }
-		| ID                            { printf( "En regla factor es ID, yylval: %s\n", yylval.str_val);
-                                                //sprintf(str_aux, "%s",$1);
+		| ID                            {chequearVarEnTabla(yylval.str_val,yylineno);
                                                       factorPtr = crearHoja(yylval.str_val,CteString) ;
                                                             printf("\nREGLA 59: <factor>-->ID\n");
                                                                   }
             | CONST_REAL                         {sprintf(str_aux, "%f",yylval.val);
                                                       factorPtr = crearHoja(str_aux,CteFloat) ;
                                                             printf("\nREGLA 60: <factor>-->CONST_REAL\n");}
-		| PAR_A expresion PAR_C             {printf("\nREGLA 61: <factor>-->PAR_A <expresion> PAR_C\n");}
-            | PAR_A expresion MOD expresion PAR_C      {printf("\nREGLA 62: <factor>-->PAR_A <expresion> MOD <expresion> PAR_C\n");}
-            | PAR_A expresion DIV expresion PAR_C       {printf("\nREGLA 63: <factor>-->PAR_A <expresion> DIV <expresion> PAR_C\n");}
+		| PAR_A  expresion  PAR_C                               {printf("\nREGLA 61: <factor>-->PAR_A <expresion> PAR_C\n");
+                                                                       factorPtr = exprPtr;}
+            | PAR_A  expresion MOD expresion PAR_C      {printf("\nREGLA 62: <factor>-->PAR_A <expresion> MOD <expresion> PAR_C\n");}
+            | PAR_A  expresion DIV expresion PAR_C       {printf("\nREGLA 63: <factor>-->PAR_A <expresion> DIV <expresion> PAR_C\n");}
+            
 		
 %%
 

@@ -8,4 +8,3 @@ del y.tab.c
 del y.output
 del y.tab.h
 dot.exe graph.dot -o ejemplo1.png -Tpng -Gcharset=utf8
-ejemplo1.png
