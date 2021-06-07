@@ -127,10 +127,17 @@ COMA		[,]
 .                  errorCaracter(yytext,yylineno);
 %%
 
+
 int main(int argc,char *argv[])
 { 
   crearPila(&pilaExpresion);
   crearPila(&pilaOperadoresCond);
+  crearPila(&pilaTermino);
+  crearPila(&pilaFactor);
+  crearPila(&pilaPrograma);
+  crearPila(&pilaCondicion);
+  crearPila(&pilaProgramaFalso);
+
   cuentaRegs=0;
   if ((yyin = fopen(argv[1], "rt")) == NULL)
   {

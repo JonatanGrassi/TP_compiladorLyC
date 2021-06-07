@@ -139,7 +139,6 @@ tArbol 	asigPtr,			//Puntero de asignaciones
 		auxAritPtr,
 		auxPtr,
 		auxIfPtr,
-		escrituraPtr,
 		declConstantePtr,	//Puntero decl_constante
 		exprCMPPtr,
 		seleccionPtr,
@@ -154,9 +153,19 @@ tArbol 	asigPtr,			//Puntero de asignaciones
 		exprMaximoPtr,
 		auxEtiqPtr,
 		auxWhilePtr,
-		auxMaxCond,
+		auxCond,
 		operDerPtr,
-		operIzqPtr;
+		operIzqPtr,
+		programaPtr,
+		lecturaPtr,
+		escrituraPtr,
+		decisionesPtr,
+		condiAuxPtr,
+		cuerpoIfPtr,
+		auxPtrIf2,
+		condicionPtrIzq,
+		cicloPtr;
+	
 
 //PILA
 
@@ -171,8 +180,12 @@ typedef struct sNodoP
 typedef tNodoP *tPila;
 
 tPila pilaExpresion;
+tPila pilaTermino;
+tPila pilaFactor;
 tPila pilaOperadoresCond;
-
+tPila pilaPrograma;
+tPila pilaCondicion;
+tPila pilaProgramaFalso;
 
 void crearPila(tPila *p);
 int  pilaLlena(const tPila *p, unsigned cantBytes);

@@ -151,6 +151,27 @@ void grabarTabla()
 	fclose(tab);
 }
 
+void invertirCondicion(char*condicion){
+	if(strcmp(condicion,"BEQ")==0){
+		strcpy(condicion,"BNE");
+	}
+	else if(strcmp(condicion,"BNE")==0){
+		strcpy(condicion,"BEQ");
+	}
+	else if(strcmp(condicion,"BGT")==0){
+		strcpy(condicion,"BLT");
+	}
+	else if(strcmp(condicion,"BLT")==0){
+		strcpy(condicion,"BGT");
+	}
+	else if(strcmp(condicion,"BGE")==0){
+		strcpy(condicion,"BLE");
+	}
+	else if(strcmp(condicion,"BLE")==0){
+		strcpy(condicion,"BGE");
+	}
+}
+
 int verifRangoString(char *ptr, int linea)
 {
 	if ((strlen(ptr) - 2) > LIMITE) //-2 para que no cuente las comillas

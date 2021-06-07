@@ -1,6 +1,15 @@
 DECVAR
 var2;var3 : float
-var5;var6;var7 : integer
+var4;var6;var7 : integer
 ENDDEC
 
-var4 : var4 + var5*3 ;
+
+while (var3 == var4 OR var6 <= var4){  
+	 var2: var3 + 8;
+        var7: var7 + 8;
+	while (var3 != var4)
+    {    
+	var7: var4 + 9;
+         var4: var2 + 10;
+    }
+}
