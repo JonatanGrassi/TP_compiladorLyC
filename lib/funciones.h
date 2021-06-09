@@ -164,7 +164,8 @@ tArbol 	asigPtr,			//Puntero de asignaciones
 		cuerpoIfPtr,
 		auxPtrIf2,
 		condicionPtrIzq,
-		cicloPtr;
+		cicloPtr,
+		auxExprePtr;
 	
 
 //PILA

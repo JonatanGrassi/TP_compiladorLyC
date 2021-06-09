@@ -1,15 +1,13 @@
 DECVAR
 var2;var3 : float
 var4;var6;var7 : integer
+a;b;d : integer
 ENDDEC
 
+var4: var4 + 2;
+write "hola";
+ if(var2 > var3)
+ {
+     var4: var4 + 2;
+ }
 
-while (var3 == var4 OR var6 <= var4){  
-	 var2: var3 + 8;
-        var7: var7 + 8;
-	while (var3 != var4)
-    {    
-	var7: var4 + 9;
-         var4: var2 + 10;
-    }
-}

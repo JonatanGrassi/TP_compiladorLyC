@@ -136,7 +136,6 @@ int main(int argc,char *argv[])
   crearPila(&pilaFactor);
   crearPila(&pilaPrograma);
   crearPila(&pilaCondicion);
-  crearPila(&pilaProgramaFalso);
 
   cuentaRegs=0;
   if ((yyin = fopen(argv[1], "rt")) == NULL)
@@ -157,7 +156,12 @@ int main(int argc,char *argv[])
 	yyparse();
   //grabarTablaSim();
   //fwrite(&tablaSimb,sizeof(tSimbo),cuentaRegs,tab);
+  vaciarPila(&pilaExpresion);
   vaciarPila(&pilaOperadoresCond);
+  vaciarPila(&pilaTermino);
+  vaciarPila(&pilaFactor);
+  vaciarPila(&pilaPrograma);
+  vaciarPila(&pilaCondicion);
   fclose(yyin);
   fclose(graph);
   return 0;

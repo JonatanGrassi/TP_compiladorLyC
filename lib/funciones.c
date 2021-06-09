@@ -9,8 +9,9 @@ extern int tipoDatoADeclarar[TAMANIO_TABLA];
 extern int indiceDatoADeclarar;
 extern int auxOperaciones;
 char msg[100];
-char aux_str[41];
+char aux_str[50];
 
+/*
 void grabarTablaSim()
 {
 	fprintf(tab, "%-*s\t%-*s\t%s\n", LIMITE, "Lexemas", LIMITE, "tipoDedato", "Longitud");
@@ -20,7 +21,7 @@ void grabarTablaSim()
 		fprintf(tab, "%-*s\t%-*d\t%d\n", LIMITE, tablaSimb[i].lexema, LIMITE, tablaSimb[i].tipoDeDato, tablaSimb[i].longitud);
 	}
 }
-
+*/
 void colocarEnTablaSimb(char *ptr, int esCte, int linea)
 {
 	int i = 0, dupli = 0;
@@ -35,7 +36,12 @@ void colocarEnTablaSimb(char *ptr, int esCte, int linea)
 		tablaSimb[cuentaRegs].longitud = strlen(ptr);
 		strcpy(tablaSimb[cuentaRegs].lexema, ptr);
 		if (esCte)
+		{	
+			sprintf(aux_str,"_%s",ptr); //pongo el guion a las cte 
 			strcpy(tablaSimb[cuentaRegs].valor, ptr);
+			strcpy(tablaSimb[cuentaRegs].lexema, aux_str);
+		}
+		
 		cuentaRegs++;
 	}
 	else
@@ -122,6 +128,7 @@ void grabarTabla()
 	int i;
 	fprintf(tab, "%-30s|%-30s|%-30s|%s\n", "NOMBRE", "TIPO", "VALOR", "LONGITUD");
 	fprintf(tab, "---------------------------------------------------------------------------------------------------------------------------------------------\n");
+	
 	for (i = 0; i <= cuentaRegs; i++)
 	{
 		fprintf(tab, "%-30s", tablaSimb[i].lexema);
@@ -315,6 +322,42 @@ void crearNodoCMP(char *comp)
 	comparacionPtr = crearNodo(comp, comparacionPtr, NULL);
 }
 
+
+void verificarTipo(tArbol* p,int tipoAux,int linea){
+	int compatible,tipo;
+	if (*p){
+        verificarTipo(&(*p)->izq,tipoAux,linea);
+        verificarTipo(&(*p)->der,tipoAux,linea);
+		if((*p)->izq==NULL && (*p)->der==NULL){
+			tipo = (*p)->info.tipoDato;
+			compatible=verificarCompatible(tipo,tipoAux);
+		}
+		if(!compatible){
+			mensajeDeError(ErrorSintactico,"Id/Cte de tipo no compatible",linea);
+		}
+	}
+}
+
+int verificarTipoDato(tArbol * p,int linea){
+	tArbol *pAux = hijoMasIzq(p);//tipo a comparar contra el resto
+	int tipoAux = (*pAux)->info.tipoDato;
+	verificarTipo(p,tipoAux,linea);
+}
+
+
+int verificarCompatible(int tipo,int tipoAux){
+	if(tipo==tipoAux)
+		return TRUE;
+	if(tipo==CteInt && tipoAux==Integer || tipoAux==CteInt && tipo==Integer )
+		return TRUE;
+	if(tipo==CteFloat && tipoAux==Float || tipoAux==CteFloat && tipo==Float )
+		return TRUE;
+	if(tipo==CteString && tipoAux==String || tipoAux==CteString && tipo==String )
+		return TRUE;
+	return FALSE;
+}
+
+
 // Devuleve la posicion en la que se encuentra el elemento buscado, -1 si no encontro el elemento
 
 /*
@@ -507,38 +550,7 @@ void validarCteEnTabla(char* nombre,int linea){
 }
 
 //Verifica el tipo de dato si es compatible entre todos los nodos del sub arbol
-int verificarTipoDato(tArbol * p,int linea){
-	tArbol *pAux = hijoMasIzq(p);//tipo a comparar contra el resto
-	int tipoAux = (*pAux)->info.tipoDato;
-	verificarTipo(p,tipoAux,linea);
-}
 
-void verificarTipo(tArbol* p,int tipoAux,int linea){
-	int compatible,tipo;
-	if (*p){
-        verificarTipo(&(*p)->izq,tipoAux,linea);
-        verificarTipo(&(*p)->der,tipoAux,linea);
-		if((*p)->izq==NULL && (*p)->der==NULL){
-			tipo = (*p)->info.tipoDato;
-			compatible=verificarCompatible(tipo,tipoAux);
-		}
-		if(!compatible){
-			mensajeDeError(ErrorSintactico,"Id/Cte de tipo no compatible",linea);
-		}
-	}
-}
-
-int verificarCompatible(int tipo,int tipoAux){
-	if(tipo==tipoAux)
-		return TRUE;
-	if(tipo==CteInt && tipoAux==Integer || tipoAux==CteInt && tipo==Integer )
-		return TRUE;
-	if(tipo==CteFloat && tipoAux==Float || tipoAux==CteFloat && tipo==Float )
-		return TRUE;
-	if(tipo==CteString && tipoAux==String || tipoAux==CteString && tipo==String )
-		return TRUE;
-	return FALSE;
-}
 
 char* normalizarNombre(const char* nombre){
     char *aux = (char *) malloc( sizeof(char) * (strlen(nombre)) + 2);
