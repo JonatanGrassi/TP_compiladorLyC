@@ -83,13 +83,14 @@ COMA		[,]
 {AND}         {return AND;}
 {ENDDEC}	    {return ENDDEC;}
 {INTEGER}	    {return INTEGER;}
+{STRING}      {return STRING;}
 {FLOAT}		    {return FLOAT;}
 {WRITE}		    {return WRITE;}
 {ELSE}		    {return ELSE;}
-{CONST_ENT}   {yylval.intval = atoi(yytext) ;verifRangoCTE_ENT(yytext,yylineno);colocarEnTablaSimb(yytext,1,yylineno); 
-                                                                                    agregarTiposDatosCte(CteInt);return CONST_ENT;}
-{CONST_REAL}  {yylval.val = atof(yytext); verifRangoCTE_REAL(yytext,yylineno);colocarEnTablaSimb(yytext,1,yylineno);
-                                                                            agregarTiposDatosCte(CteFloat);return CONST_REAL;}
+{CONST_ENT}   {yylval.intval = atoi(yytext) ;verifRangoCTE_ENT(yytext,yylineno);colocarEnTablaSimb(yytext,1,yylineno,CteInt); 
+                                                                                    return CONST_ENT;}
+{CONST_REAL}  {yylval.val = atof(yytext); verifRangoCTE_REAL(yytext,yylineno);colocarEnTablaSimb(yytext,1,yylineno,CteFloat);
+                                                                            return CONST_REAL;}
 
 {PAR_A}		{return PAR_A;}
 {ID}	        {yylval.str_val = strdup(yytext); verifRangoID(yytext,yylineno);return ID;}
@@ -102,9 +103,9 @@ COMA		[,]
 {COR_A}   {return COR_A;}
 {COR_C}   {return COR_C;}
 {COMA}			  {return COMA;}
-{CTE_STRING}	{yylval.str_val = strdup(yytext); verifRangoString(yytext,yylineno);colocarEnTablaSimb(yytext,1,yylineno);
-                                                                                agregarTiposDatosCte(CteString);return CTE_STRING;}
-{STRING}      {return STRING;}
+{CTE_STRING}	{yylval.str_val = strdup(yytext); verifRangoString(yytext,yylineno);colocarEnTablaSimb(yytext,1,yylineno,CteString);
+                                                                                return CTE_STRING;}
+
 
 {OP_ASIG}		{return OP_ASIG;}
 {OP_SUMA}		{return OP_SUMA;}
@@ -154,8 +155,6 @@ int main(int argc,char *argv[])
             return 1;
           }
 	yyparse();
-  //grabarTablaSim();
-  //fwrite(&tablaSimb,sizeof(tSimbo),cuentaRegs,tab);
   vaciarPila(&pilaExpresion);
   vaciarPila(&pilaOperadoresCond);
   vaciarPila(&pilaTermino);

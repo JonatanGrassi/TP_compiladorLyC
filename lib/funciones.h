@@ -21,29 +21,28 @@ enum tipoError
 #define PILA_VAC 0
 #define MIN(x,y) ((x<y)?x:y)
 #define LIMITE 30
-#define LIMITEFLOAT 40
 #define LIMITEENT 5
+#define TAMANIO_TABLA 1000
+#define TAM_NOMBRE 32
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-#define TAMANIO_TABLA 1000
-#define TAM_NOMBRE 32
-#define ES_CTE_CON_NOMBRE 1
-/* Defino estructura de informacion para el arbol*/
+
+/* Struct Arbol*/
 	typedef struct {
 		char dato[40];
 		int tipoDato;		
 	}tInfo;
 
-/* Defino estructura de nodo de arbol*/
+/* Struct*/
 typedef struct sNodo{
 	tInfo info;
 	struct sNodo *izq, *der;
 }tNodo;
 
-/* Defino estructura de arbol*/
+
 typedef tNodo* tArbol;
 tInfo infoArbol;
 
@@ -65,94 +64,41 @@ int _cantIds;
 int verifRangoString(char*ptr,int linea);
 int verifRangoCTE_ENT(char*ptr,int linea);
 int verifRangoCTE_REAL(char*ptr,int linea);
-void colocarEnTablaSimb(char*ptr,int esCte,int linea);
+void colocarEnTablaSimb(char*ptr,int esCte,int linea,int tDatoCte);
 int verifRangoID(char*ptr,int linea);
 int comparaLexemas(char*ptr1,char*ptr2);
 void errorCaracter(char*ptr,int linea);
-void grabarTablaSim();
 void agregarTipoDeDatoVarAtabla(int tDato);
 void agregarTiposDatosCte(int tDato);
 int chequearVarEnTabla(char* nombre,int linea);
 void mensajeDeError(enum tipoError error,const char* info, int linea);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void agregarVarATabla(char* nombre,int esCteConNombre,int linea);
-
-void agregarCteATabla(int num);
-void agregarEnTabla(char* nombre,int linea,int tipo);
-
+void esVariableNumerica(int posDeTabla,int linea);
+void errorDeCompatibilidadOperadores(tArbol*operaIzq,tArbol*operaDer,int linea);
 int verificarTipoDato(tArbol * p,int linea);
 void verificarTipo(tArbol* p,int tipoAux,int linea);
 int verificarCompatible(int tipo,int tipoAux);
 int buscarEnTabla(char * nombre);
-void grabarTabla(void);
-char* normalizarNombre(const char* nombre);
-char * reemplazarCaracter(char * aux);
-char* normalizarId(const char* cadena);
-void validarCteEnTabla(char* nombre,int linea);
-void agregarValorACte(int tipo);
-void generarAsm(tArbol *p);
-void recorrerArbol(tArbol *arbol,FILE * pf);
-void tratarNodo(tArbol* nodo,FILE *pf);
-void crearNodoCMP(char * comp);
-void invertirSalto(tArbol *p);
-int resolverTipoDatoMaximo(int tipo);
-
+void grabarTabla();
 tNodo* crearNodo(const char* dato, tNodo *pIzq, tNodo *pDer);
 tNodo* crearHoja(char* dato,int tipo);
+tNodo *copiarDato(tNodo *);
 tArbol * hijoMasIzq(tArbol *p);
 void enOrden(tArbol *p);
 void verNodo(const char *p);
+void invertirSalto(tArbol *p);
+void generaIntermediaIf();
+void generaIntermediaIfConElse();
+void generaIntermediaWhile();
 
-/* Declaraciones globales de punteros de elementos no terminales para el arbol de sentencias basicas*/
 
+/*Punteros para arbol*/
 tArbol 	asigPtr,			//Puntero de asignaciones
 		exprPtr,			//Puntero de expresiones
-		exprCadPtr,			//Puntero de expresiones de cadenas
-		exprAritPtr,		//Puntero de expresiones aritmeticas
 		terminoPtr,			//Puntero de terminos
 		factorPtr,			//Puntero de factores
-		sentenciaPtr,		//Puntero de sentencia	
-		bloqueWhPtr,		//Puntero de bloque de While	
-		listaExpComaPtr,	//Puntero de lista expresion coma
-		elseBloquePtr,		//Puntero para el bloque del else
-		thenBloquePtr,		//Puntero para el bloque del then
-		expreLogAuxPtr,
-		auxBloquePtr,
-		auxAritPtr,
-		auxPtr,
-		auxIfPtr,
-		declConstantePtr,	//Puntero decl_constante
-		exprCMPPtr,
-		seleccionPtr,
-		seleccionIFPtr,
-		seleccionIFElsePtr,
-		comparadorPtr,
-		comparacionPtr,
-		comparacionAuxPtr,
+		sentenciaPtr,		//Puntero de sentencia				
+		auxBloquePtr,       
 		condicionPtr,
-		auxCondicionPtr,
-		auxMaxNodo,
-		exprMaximoPtr,
-		auxEtiqPtr,
-		auxWhilePtr,
 		auxCond,
 		operDerPtr,
 		operIzqPtr,
@@ -165,13 +111,14 @@ tArbol 	asigPtr,			//Puntero de asignaciones
 		auxPtrIf2,
 		condicionPtrIzq,
 		cicloPtr,
-		auxExprePtr;
-	
+		auxExprePtr,
+		auxInlist1,
+		auxInlist2,
+		inlistPtr,
+		inlistExprePtr,
+		inlistBuscarPtr;
 
 //PILA
-
-
-
 typedef struct sNodoP
 {
     void           *info;
@@ -195,8 +142,5 @@ int  verTope(const tPila *p, void *d, unsigned cantBytes);
 int  pilaVacia(const tPila *p);
 int  sacarDePila(tPila *p, void *d, unsigned cantBytes);
 void vaciarPila(tPila *p);
-
-
-tNodo *copiarDato(tNodo *);
 
 #endif

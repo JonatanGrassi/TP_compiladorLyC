@@ -3,45 +3,32 @@
 #include <conio.h>
 #include "funciones.h"
 
-extern int varADeclarar1;
-extern int cantVarsADeclarar;
-extern int tipoDatoADeclarar[TAMANIO_TABLA];
-extern int indiceDatoADeclarar;
-extern int auxOperaciones;
 char msg[100];
 char aux_str[50];
 
-/*
-void grabarTablaSim()
-{
-	fprintf(tab, "%-*s\t%-*s\t%s\n", LIMITE, "Lexemas", LIMITE, "tipoDedato", "Longitud");
-	int i;
-	for (i = 0; i < cuentaRegs; i++)
-	{
-		fprintf(tab, "%-*s\t%-*d\t%d\n", LIMITE, tablaSimb[i].lexema, LIMITE, tablaSimb[i].tipoDeDato, tablaSimb[i].longitud);
-	}
-}
-*/
-void colocarEnTablaSimb(char *ptr, int esCte, int linea)
+void colocarEnTablaSimb(char *ptr, int esCte, int linea, int tDatoCte)
 {
 	int i = 0, dupli = 0;
+	if (esCte)
+		sprintf(aux_str, "_%s", ptr);
 	while (i < cuentaRegs && !dupli)
 	{
-		if (!strcmp(tablaSimb[i].lexema, ptr))
+		if (!strcmp(tablaSimb[i].lexema, esCte ? aux_str : ptr))
 			dupli = 1;
 		i++;
 	}
 	if (!dupli)
 	{
 		tablaSimb[cuentaRegs].longitud = strlen(ptr);
-		strcpy(tablaSimb[cuentaRegs].lexema, ptr);
 		if (esCte)
-		{	
-			sprintf(aux_str,"_%s",ptr); //pongo el guion a las cte 
+		{
 			strcpy(tablaSimb[cuentaRegs].valor, ptr);
 			strcpy(tablaSimb[cuentaRegs].lexema, aux_str);
+			tablaSimb[cuentaRegs].tipoDeDato = tDatoCte;
 		}
-		
+		else
+			strcpy(tablaSimb[cuentaRegs].lexema, ptr);
+
 		cuentaRegs++;
 	}
 	else
@@ -52,6 +39,31 @@ void colocarEnTablaSimb(char *ptr, int esCte, int linea)
 			mensajeDeError(ErrorSintactico, msg, linea);
 		}
 	}
+}
+
+void generaIntermediaIf()
+{
+	sacarDePila(&pilaCondicion, &condicionPtr, sizeof(condicionPtr));
+	decisionesPtr = crearNodo("IF", condicionPtr, programaPtr);
+	if (!sacarDePila(&pilaPrograma, &programaPtr, sizeof(programaPtr)))
+		programaPtr = NULL;
+}
+
+void generaIntermediaIfConElse()
+{
+	sacarDePila(&pilaCondicion, &condicionPtr, sizeof(condicionPtr));
+	sacarDePila(&pilaPrograma, &auxBloquePtr, sizeof(programaPtr));
+	cuerpoIfPtr = crearNodo("CUERPOIF", auxBloquePtr, programaPtr);
+	decisionesPtr = crearNodo("IF", condicionPtr, cuerpoIfPtr);
+	if (!sacarDePila(&pilaPrograma, &programaPtr, sizeof(programaPtr)))
+		programaPtr = NULL;
+}
+void generaIntermediaWhile()
+{
+	sacarDePila(&pilaCondicion, &condicionPtr, sizeof(condicionPtr));
+	cicloPtr = crearNodo("WHILE", condicionPtr, programaPtr);
+	if (!sacarDePila(&pilaPrograma, &programaPtr, sizeof(programaPtr)))
+		programaPtr = NULL;
 }
 
 int chequearVarEnTabla(char *lexema, int linea)
@@ -113,23 +125,13 @@ void agregarTipoDeDatoVarAtabla(int tDato)
 	}
 }
 
-void agregarTipoDeDatoCte(tPila *pilaIds, int tDato)
-{
-	int i = 0, actual = 0;
-	while (actual < _cantIds)
-	{
-		tablaSimb[cuentaRegs - actual - 1].tipoDeDato = tDato;
-		actual++;
-	}
-}
-
 void grabarTabla()
 {
 	int i;
 	fprintf(tab, "%-30s|%-30s|%-30s|%s\n", "NOMBRE", "TIPO", "VALOR", "LONGITUD");
 	fprintf(tab, "---------------------------------------------------------------------------------------------------------------------------------------------\n");
-	
-	for (i = 0; i <= cuentaRegs; i++)
+
+	for (i = 0; i < cuentaRegs; i++)
 	{
 		fprintf(tab, "%-30s", tablaSimb[i].lexema);
 		switch (tablaSimb[i].tipoDeDato)
@@ -147,6 +149,7 @@ void grabarTabla()
 			fprintf(tab, "|%-30s|%-30s|%d", "CTE_FLOAT", tablaSimb[i].valor, tablaSimb[i].longitud);
 			break;
 		case CteInt:
+
 			fprintf(tab, "|%-30s|%-30s|%d", "CTE_INT", tablaSimb[i].valor, tablaSimb[i].longitud);
 			break;
 		case CteString:
@@ -158,24 +161,31 @@ void grabarTabla()
 	fclose(tab);
 }
 
-void invertirCondicion(char*condicion){
-	if(strcmp(condicion,"BEQ")==0){
-		strcpy(condicion,"BNE");
+void invertirCondicion(char *condicion)
+{
+	if (strcmp(condicion, "BEQ") == 0)
+	{
+		strcpy(condicion, "BNE");
 	}
-	else if(strcmp(condicion,"BNE")==0){
-		strcpy(condicion,"BEQ");
+	else if (strcmp(condicion, "BNE") == 0)
+	{
+		strcpy(condicion, "BEQ");
 	}
-	else if(strcmp(condicion,"BGT")==0){
-		strcpy(condicion,"BLT");
+	else if (strcmp(condicion, "BGT") == 0)
+	{
+		strcpy(condicion, "BLT");
 	}
-	else if(strcmp(condicion,"BLT")==0){
-		strcpy(condicion,"BGT");
+	else if (strcmp(condicion, "BLT") == 0)
+	{
+		strcpy(condicion, "BGT");
 	}
-	else if(strcmp(condicion,"BGE")==0){
-		strcpy(condicion,"BLE");
+	else if (strcmp(condicion, "BGE") == 0)
+	{
+		strcpy(condicion, "BLE");
 	}
-	else if(strcmp(condicion,"BLE")==0){
-		strcpy(condicion,"BGE");
+	else if (strcmp(condicion, "BLE") == 0)
+	{
+		strcpy(condicion, "BGE");
 	}
 }
 
@@ -185,19 +195,35 @@ int verifRangoString(char *ptr, int linea)
 	{
 		sprintf(msg, "la cadena (%s) supera el rango permitido", ptr);
 		mensajeDeError(ErrorLexico, msg, linea);
-		//printf("\nla cadena (%s) supera el rango permitido\n", ptr);
-		//return yyerror();
 	}
 	return 0;
 }
+
+void esVariableNumerica(int posDeTabla, int linea)
+{
+	int tDato = tablaSimb[posDeTabla].tipoDeDato;
+	if (tDato != Integer && tDato != Float)
+	{
+		sprintf(msg, "Solo se muestran variables numericas:la variable (%s) no es una variable numerica", tablaSimb[posDeTabla].lexema);
+		mensajeDeError(ErrorSintactico, msg, linea);
+	}
+}
+
+void errorDeCompatibilidadOperadores(tArbol *operaIzq, tArbol *operaDer, int linea)
+{
+	if (!verificarCompatible((*operaDer)->info.tipoDato, (*operaIzq)->info.tipoDato))
+	{
+		sprintf(msg, "Los operadores %s y %s de la condicion no son compatibles", (*operaIzq)->info.dato, (*operaDer)->info.dato);
+		mensajeDeError(ErrorSintactico, msg, linea);
+	}
+}
+
 int verifRangoID(char *ptr, int linea)
 {
 	if ((strlen(ptr)) > LIMITE)
 	{
 		sprintf(msg, "La variable: %s supera el rango permitido", ptr);
 		mensajeDeError(ErrorLexico, msg, linea);
-		//printf("\nLa variable: (%s) supera el rango permitido", ptr);
-		//return yyerror();
 	}
 	return 0;
 }
@@ -207,8 +233,6 @@ int verifRangoCTE_ENT(char *ptr, int linea)
 	{
 		sprintf(msg, "La constante: %s supera el rango permitido", ptr);
 		mensajeDeError(ErrorLexico, msg, linea);
-		//printf("\nLa constante: (%s) supera el rango permitido", ptr);
-		//return yyerror();
 	}
 	return 0;
 }
@@ -219,8 +243,6 @@ int verifRangoCTE_REAL(char *ptr, int linea)
 	{
 		sprintf(msg, "la constante real: %s supera el rango permitido", ptr);
 		mensajeDeError(ErrorLexico, msg, linea);
-		//printf("\nla constante real (%s) supera el rango permitido\n", ptr);
-		//yyerror();
 	}
 	return 0;
 }
@@ -228,8 +250,6 @@ void errorCaracter(char *ptr, int linea)
 {
 	sprintf(msg, "Caracter: %s invalido", ptr);
 	mensajeDeError(ErrorLexico, msg, linea);
-	//printf("\nCaracter: (%s) invalido\n", ptr);
-	//yyerror();
 }
 
 tNodo *crearNodo(const char *dato, tNodo *pIzq, tNodo *pDer)
@@ -316,304 +336,42 @@ void tree_print_dot(tArbol *p, FILE *stream)
 	fprintf(stream, "}");
 }
 
-void crearNodoCMP(char *comp)
+void verificarTipo(tArbol *p, int tipoAux, int linea)
 {
-	comparacionPtr = crearNodo("CMP", exprCMPPtr, exprPtr);
-	comparacionPtr = crearNodo(comp, comparacionPtr, NULL);
-}
-
-
-void verificarTipo(tArbol* p,int tipoAux,int linea){
-	int compatible,tipo;
-	if (*p){
-        verificarTipo(&(*p)->izq,tipoAux,linea);
-        verificarTipo(&(*p)->der,tipoAux,linea);
-		if((*p)->izq==NULL && (*p)->der==NULL){
+	int compatible, tipo;
+	if (*p)
+	{
+		verificarTipo(&(*p)->izq, tipoAux, linea);
+		verificarTipo(&(*p)->der, tipoAux, linea);
+		if ((*p)->izq == NULL && (*p)->der == NULL)
+		{
 			tipo = (*p)->info.tipoDato;
-			compatible=verificarCompatible(tipo,tipoAux);
+			compatible = verificarCompatible(tipo, tipoAux);
+			printf("   ");
 		}
-		if(!compatible){
-			mensajeDeError(ErrorSintactico,"Id/Cte de tipo no compatible",linea);
+		if (!compatible)
+		{
+			mensajeDeError(ErrorSintactico, "tipos no compatibles", linea);
 		}
 	}
 }
 
-int verificarTipoDato(tArbol * p,int linea){
-	tArbol *pAux = hijoMasIzq(p);//tipo a comparar contra el resto
+int verificarTipoDato(tArbol *p, int linea)
+{
+	tArbol *pAux = hijoMasIzq(p); //tipo a comparar contra el resto
 	int tipoAux = (*pAux)->info.tipoDato;
-	verificarTipo(p,tipoAux,linea);
+	verificarTipo(p, tipoAux, linea);
 }
 
-
-int verificarCompatible(int tipo,int tipoAux){
-	if(tipo==tipoAux)
+int verificarCompatible(int tipo, int tipoAux)
+{
+	if (tipo == tipoAux)
 		return TRUE;
-	if(tipo==CteInt && tipoAux==Integer || tipoAux==CteInt && tipo==Integer )
+	if (tipo == CteInt && tipoAux == Integer || tipoAux == CteInt && tipo == Integer)
 		return TRUE;
-	if(tipo==CteFloat && tipoAux==Float || tipoAux==CteFloat && tipo==Float )
+	if (tipo == CteFloat && tipoAux == Float || tipoAux == CteFloat && tipo == Float)
 		return TRUE;
-	if(tipo==CteString && tipoAux==String || tipoAux==CteString && tipo==String )
+	if (tipo == CteString && tipoAux == String || tipoAux == CteString && tipo == String)
 		return TRUE;
 	return FALSE;
 }
-
-
-// Devuleve la posicion en la que se encuentra el elemento buscado, -1 si no encontro el elemento
-
-/*
-int yyerror(char* mensaje){
-	printf("Syntax Error: %s\n", mensaje);
-	system ("Pause");
-	exit (1);
- }
-
-
- // Agrega los tipos de datos a las variables declaradas. Usa las variables globales varADeclarar1, cantVarsADeclarar y tipoDatoADeclarar
-void agregarTiposDatosATabla(){
-	int i;
-	for(i = 0; i < cantVarsADeclarar; i++){
-		tabla_simbolo[varADeclarar1 + i].tipo_dato = tipoDatoADeclarar[i];
-	}
-}
-
- void agregarEnTabla(char* nombre,int linea,int tipo){
-	 if(indice_tabla >= TAMANIO_TABLA - 1){
-		 printf("Error: No hay mas espacio en la tabla de simbolos.\n");
-		 system("Pause");
-		 exit(2);
-	 }
-
-	 if(buscarEnTabla(nombre) == -1){
-		 //Agregar a tabla
-		 indice_tabla ++;
-		 strcpy(tabla_simbolo[indice_tabla].nombre,normalizarId(nombre));
-		 tabla_simbolo[indice_tabla].tipo_dato = tipo;
-	 }
- }
-
-// Guarda la tabla de simbolos en un archivo de texto 
-void grabarTabla(){
-	if(indice_tabla == -1)
-		yyerror("No se encontro la tabla de simbolos");
-
-	FILE* arch = fopen("ts.txt", "w+");
-	if(!arch){
-		printf("No se pudo crear el archivo ts.txt\n");
-		return;
-	}
-	
-	int i;
-	char valor[TAM_NOMBRE];
-	fprintf(arch, "%-30s|%-30s|%-30s|%-30s|%s\n","NOMBRE","TIPO","VALOR","LONGITUD","ES CTE CON NOMBRE ");
-	fprintf(arch, "..............................................................................................................................................\n");
-	for(i = 0; i <= indice_tabla; i++){
-		fprintf(arch, "%-30s", &(tabla_simbolo[i].nombre) );
-			
-		switch (tabla_simbolo[i].tipo_dato){
-		case Float:
-			if(tabla_simbolo[i].esCteConNombre){
-				sprintf(valor, "%f", tabla_simbolo[i].valor_f);
-			}else{
-				strcpy(valor,"--");
-			}
-			fprintf(arch, "|%-30s|%-30s|%-30s|%d","FLOAT",valor,"--",tabla_simbolo[i].esCteConNombre);
-			break;
-		case Integer:
-			if(tabla_simbolo[i].esCteConNombre){
-				sprintf(valor, "%d", tabla_simbolo[i].valor_i);
-			}else{
-				strcpy(valor,"--");
-			}
-			fprintf(arch, "|%-30s|%-30s|%-30s|%d","INTEGER",valor,"--",tabla_simbolo[i].esCteConNombre);
-			break;
-		case String:
-		
-			if(tabla_simbolo[i].esCteConNombre){
-				strcpy(valor,tabla_simbolo[i].valor_s);
-			}else{
-				strcpy(valor,"--");
-			}
-			fprintf(arch, "|%-30s|%-30s|%-30s|%d","STRING",tabla_simbolo[i].valor_s,"--",tabla_simbolo[i].esCteConNombre);
-			break;
-		case CteFloat:
-			fprintf(arch, "|%-30s|%-30f|%-30s|%s", "CTE_FLOAT",tabla_simbolo[i].valor_f,"--","--");
-			break;
-		case CteInt:
-			fprintf(arch, "|%-30s|%-30d|%-30s|%s", "CTE_INT",tabla_simbolo[i].valor_i,"--","--");
-			break;
-		case CteString:
-			fprintf(arch, "|%-30s|%-30s|%-30d|%s", "CTE_STRING",&(tabla_simbolo[i].valor_s), tabla_simbolo[i].longitud,"--");
-			break;
-		}
-
-		fprintf(arch, "\n");
-	}
-	fclose(arch);
-}
-
- 
-
-// Agrega una constante a la tabla de simbolos 
-void agregarCteATabla(int num){
-	char nombre[30];
-
-	if(indice_tabla >= TAMANIO_TABLA - 1){
-		printf("Error: No hay mas espacio en la tabla de simbolos.\n");
-		system("Pause");
-		exit(2);
-	}
-	
-	switch(num){
-		case CteInt:
-			sprintf(nombre, "%d", yylval.valor_int);
-			//Si no hay otra variable con el mismo nombre...
-			if(buscarEnTabla(nombre) == -1){
-			//Agregar nombre a tabla
-				indice_tabla++;
-				strcpy(tabla_simbolo[indice_tabla].nombre,normalizarId(nombre));
-			//Agregar tipo de dato
-				tabla_simbolo[indice_tabla].tipo_dato = CteInt;
-			//Agregar valor a la tabla
-				tabla_simbolo[indice_tabla].valor_i = yylval.valor_int;
-			}
-		break;
-
-		case CteFloat:
-			sprintf(nombre, "%f",yylval.valor_float);
-			//Si no hay otra variable con el mismo nombre...
-			if(buscarEnTabla(nombre) == -1){
-			//Agregar nombre a tabla
-				indice_tabla ++;
-				strcpy(tabla_simbolo[indice_tabla].nombre, normalizarId(nombre));
-			//Agregar tipo de dato
-				tabla_simbolo[indice_tabla].tipo_dato = CteFloat;
-			//Agregar valor a la tabla
-				tabla_simbolo[indice_tabla].valor_f = yylval.valor_float;
-			}
-		break;
-
-		case CteString:
-			strcpy(nombre,normalizarNombre(yylval.valor_string));
-			memmove(&nombre[0], &nombre[1], strlen(nombre));//Remover el primer guion "_"
-			if(buscarEnTabla(nombre) == -1){
-			//Agregar nombre a tabla
-				indice_tabla ++;
-				strcpy(tabla_simbolo[indice_tabla].nombre,normalizarNombre(yylval.valor_string));				
-				//Agregar tipo de dato
-				tabla_simbolo[indice_tabla].tipo_dato = CteString;
-
-				//Agregar valor a la tabla
-				int length = strlen(yylval.valor_string);
-				char auxiliar[length];
-				strcpy(auxiliar,yylval.valor_string);
-				auxiliar[strlen(auxiliar)-1] = '\0';
-				strcpy(tabla_simbolo[indice_tabla].valor_s, auxiliar+1);
-				//Agregar longitud
-				tabla_simbolo[indice_tabla].longitud = length -2;
-				
-			}
-		break;
-
-			case SinTipo:
-			if(buscarEnTabla(yylval.valor_string) == -1){
-			//Agregar nombre a tabla
-				indice_tabla ++;
-				strcpy(tabla_simbolo[indice_tabla].nombre,normalizarNombre(yylval.valor_string));			
-
-				//Agregar tipo de dato
-				tabla_simbolo[indice_tabla].tipo_dato = SinTipo;
-				
-
-				//Agregar valor a la tabla
-				int length = strlen(yylval.valor_string);
-				char auxiliar[length];
-				strcpy(auxiliar,yylval.valor_string);
-				auxiliar[strlen(auxiliar)] = '\0';
-				strcpy(tabla_simbolo[indice_tabla].valor_s, "--");
-				//Agregar longitud
-				tabla_simbolo[indice_tabla].longitud = length -2;
-	
-			}
-		break;
-
-	}
-}
-
-// Se fija si ya existe una entrada con ese nombre en la tabla de simbolos. Si no existe, muestra un error de variable sin declarar y aborta la compilacion. 
-
-
-void validarCteEnTabla(char* nombre,int linea){
-	int pos = buscarEnTabla(nombre); 
-	if(tabla_simbolo[pos].esCteConNombre){
-		mensajeDeError(ErrorSintactico,"No se puede asignar valor a la cte",linea);
-	}
-}
-
-//Verifica el tipo de dato si es compatible entre todos los nodos del sub arbol
-
-
-char* normalizarNombre(const char* nombre){
-    char *aux = (char *) malloc( sizeof(char) * (strlen(nombre)) + 2);
-	char *retor = (char *) malloc( sizeof(char) * (strlen(nombre)) + 2);
-	
-	strcpy(retor,nombre);
-	int len = strlen(nombre);
-	retor[len-1] = '\0';
-	
-	strcpy(aux,"_");
-	strcat(aux,++retor);
-
-	return reemplazarCaracter(aux);
-}
-
-char* normalizarId(const char* cadena){
-	char *aux = (char *) malloc( sizeof(char) * (strlen(cadena)) + 2);
-	strcpy(aux,"_");
-	strcat(aux,cadena);
-	reemplazarCaracter(aux);
-	return aux;
-}
-
-char * reemplazarCaracter(char * aux){
-	int i=0;
-	for(i = 0; i <= strlen(aux); i++){
-  		if(aux[i] == '\t' || aux[i] == '\r' || aux[i] == ' ' || aux[i] == ':' || aux[i] == '!'){
-  			aux[i] = '_';
- 		}
-
-		if(aux[i] == '.'){
-  			aux[i] = 'p';
- 		}
-	}
-	return aux;
-}
-
-void invertirSalto(tArbol *p){
-	if(strcmp((*p)->info.dato,"BEQ")==0){
-		strcpy((*p)->info.dato,"BNE");
-	}
-	else if(strcmp((*p)->info.dato,"BNE")==0){
-		strcpy((*p)->info.dato,"BEQ");
-	}
-	else if(strcmp((*p)->info.dato,"BGT")==0){
-		strcpy((*p)->info.dato,"BLT");
-	}
-	else if(strcmp((*p)->info.dato,"BLT")==0){
-		strcpy((*p)->info.dato,"BGT");
-	}
-	else if(strcmp((*p)->info.dato,"BGE")==0){
-		strcpy((*p)->info.dato,"BLE");
-	}
-	else if(strcmp((*p)->info.dato,"BLE")==0){
-		strcpy((*p)->info.dato,"BGE");
-	}
-}
-
-int resolverTipoDatoMaximo(int tipo){
-	if(tipo==CteInt || tipo==Integer )
-		return Integer;
-	else if(tipo==CteFloat  || tipo==Float )
-		return Float;
-	return SinTipo;
-}
-*/

@@ -11,11 +11,15 @@ FILE  *yyin;
 extern int yylineno;
 char str_aux[50];
 char str_aux2[50];
+char inlistAux[50];
+char inlistAux2[50];
 int __buscar;
 int __repe;
+int tipoDatoID;
 char conector[10];
 char compara[10];
 int cuerpoCont=0;
+int cantidadInlist=0;
 int auxDato;
 int posEnTabla;
 int isNegado=0;
@@ -52,11 +56,10 @@ iniciopro: DECVAR declaracion ENDDEC programa   {grabarTabla();tree_print_dot(&p
 
 programa: sentencia 	                  {
                                           if(programaPtr!=NULL)
-                                          {   
-                                               
+                                          {    
                                               sprintf(str_aux, "CUERPO%d",cuerpoCont++);
 							    programaPtr = crearNodo(str_aux, sentenciaPtr, NULL);
-                                              printf("entro");
+                                             
 							} else   
                                           {
 							    programaPtr = sentenciaPtr;
@@ -86,255 +89,259 @@ sentencia: asignacion PYC		{sentenciaPtr = asigPtr;
                
                
 declaracion: listadeclara                  {printf("\nREGLA 8: <declaracion>--><listadeclara> PYC\n");}      
-            | declaracion listadeclara            
+            | declaracion listadeclara            {printf("\nREGLA 9: <declaracion>--> <declaracion> <listadeclara> PYC\n");}  
 
 listadeclara : {_cantIds=0;} listvar OP_ASIG tdato      {agregarTipoDeDatoVarAtabla(auxDato);printf("\nREGLA 10: <listadeclara>--><listvar> OP_ASIG <tdato>\n");}
 
-listvar : listvar PYC ID             {_cantIds++;colocarEnTablaSimb($<str_val>3,0,yylineno);printf("\nREGLA 11: <listvar>--><listvar> PYC ID\n");}
-        | ID                        {_cantIds++;colocarEnTablaSimb($<str_val>1,0,yylineno);printf("\nREGLA 12: <listvar>-->ID\n");}
+listvar : listvar PYC ID             {_cantIds++;colocarEnTablaSimb($<str_val>3,0,yylineno,0);printf("\nREGLA 11: <listvar>--><listvar> PYC ID\n");}
+        | ID                        {_cantIds++;colocarEnTablaSimb($<str_val>1,0,yylineno,0);printf("\nREGLA 12: <listvar>-->ID\n");}
 
 tdato: INTEGER                {auxDato = Integer ;printf("\nREGLA 13: <tdato>-->INTEGER\n");}
       | FLOAT                 {auxDato = Float ;printf("\nREGLA 14: <tdato>-->FLOAT\n");}
       | STRING                {auxDato = String ;printf("\nREGLA 15: <tdato>-->STRING\n");}
 
 escrituraSinVar: escrituraSinVarSente {printf("\nREGLA 16: <escrituraSinVar>--><escrituraSinVarSente>\n");}
-                 | escrituraSinVar escrituraSinVarSente 
+                 | escrituraSinVar escrituraSinVarSente  {printf("\nREGLA 17: <escrituraSinVar>--><escrituraSinVar> <escrituraSinVarSente>\n");}
 
 escrituraSinVarSente: WRITE CTE_STRING PYC {printf("\nREGLA 18: <escrituraSinVarSente>-->WRITE CTE_STRING PYC\n");}
 
-decisiones : IF PAR_A condicion conectLog condicion subrutIf4 PAR_C LLAV_A subrutIf programa LLAV_C subrutIf3  ELSE LLAV_A programa LLAV_C { sacarDePila(&pilaCondicion,&condicionPtr,sizeof(condicionPtr));
-                                                                                                                              sacarDePila(&pilaPrograma,&auxBloquePtr,sizeof(programaPtr));
-                                                                                                                              
-                                                                                                                              cuerpoIfPtr=crearNodo("CUERPOIF",auxBloquePtr,programaPtr);                                                                                    
-                                                                                                                              decisionesPtr=crearNodo("IF",condicionPtr,cuerpoIfPtr);
-                                                                                                                              if(!sacarDePila(&pilaPrograma,&programaPtr,sizeof(programaPtr)))
-                                                                                                                                    programaPtr=NULL;
-                                                                                                                                  printf("\nREGLA 20: <decisiones>-->IF PAR_A <condicion> <conectLog> <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}
+decisiones : IF PAR_A condicion conectLog condicion subrutIf4 PAR_C LLAV_A subrutIf programa LLAV_C subrutIf3  ELSE LLAV_A programa LLAV_C {  generaIntermediaIfConElse();
+                                                                                                                                  printf("\nREGLA 19: <decisiones>-->IF PAR_A <condicion> <conectLog> <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}
             
             
-            | IF PAR_A subrutIf2 NOT condicion subrutIf PAR_C LLAV_A programa LLAV_C subrutIf3  ELSE LLAV_A programa LLAV_C { sacarDePila(&pilaCondicion,&condicionPtr,sizeof(condicionPtr));
-                                                                                                                              sacarDePila(&pilaPrograma,&auxBloquePtr,sizeof(programaPtr));
-                                                                                                                              
-                                                                                                                              cuerpoIfPtr=crearNodo("CUERPOIF",auxBloquePtr,programaPtr);                                                                                    
-                                                                                                                              decisionesPtr=crearNodo("IF",condicionPtr,cuerpoIfPtr);
-                                                                                                                              if(!sacarDePila(&pilaPrograma,&programaPtr,sizeof(programaPtr)))
-                                                                                                                                    programaPtr=NULL;
-                                                                                                                                    printf("\nREGLA 22: <decisiones>-->IF PAR_A NOT <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}
+            | IF PAR_A subrutIf2 NOT condicion subrutIf PAR_C LLAV_A programa LLAV_C subrutIf3  ELSE LLAV_A programa LLAV_C {  generaIntermediaIfConElse();
+                                                                                                                                    printf("\nREGLA 20: <decisiones>-->IF PAR_A NOT <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}
             | IF PAR_A condicion subrutIf PAR_C  LLAV_A programa LLAV_C subrutIf3  ELSE LLAV_A programa LLAV_C { 
-                                                                                                                              sacarDePila(&pilaCondicion,&condicionPtr,sizeof(condicionPtr));
-                                                                                                                              sacarDePila(&pilaPrograma,&auxBloquePtr,sizeof(programaPtr));
-                                                                                                                                   
-                                                                                                                              cuerpoIfPtr=crearNodo("CUERPOIF",auxBloquePtr,programaPtr);                                                                                    
-                                                                                                                              decisionesPtr=crearNodo("IF",condicionPtr,cuerpoIfPtr);
-                                                                                                                              if(!sacarDePila(&pilaPrograma,&programaPtr,sizeof(programaPtr)))
-                                                                                                                                    programaPtr=NULL;
-                                                                                                                              printf("\nREGLA 23: <decisiones>-->IF PAR_A <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}                                                                                                                   
-
-                                                                                                                            
-                                                                                                                              
-                                                                                                  
-                                                                                                 
-            | IF PAR_A condicion conectLog condicion subrutIf4 PAR_C LLAV_A subrutIf programa  LLAV_C  {
-                                                                                                      {sacarDePila(&pilaCondicion,&condicionPtr,sizeof(condicionPtr));                                                                                    
-                                                                                                decisionesPtr=crearNodo("IF",condicionPtr,programaPtr);
-                                                                                                      if(!sacarDePila(&pilaPrograma,&programaPtr,sizeof(programaPtr)))
-                                                                                                            programaPtr=NULL;
-                                                                                                printf("\nREGLA 26: <decisiones>-->IF PAR_A NOT <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
-                                                                                    printf("\nREGLA 24: <decisiones>-->IF PAR_A <condicion> <conectLog> <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
+                                                                                                                              generaIntermediaIfConElse();
+                                                                                                                              printf("\nREGLA 21: <decisiones>-->IF PAR_A <condicion> PAR_C LLAV_A <programa> LLAV_C ELSE LLAV_A <programa> LLAV_C\n");}                                                                                                                   
+                                                                                           
+            | IF PAR_A condicion conectLog condicion subrutIf4 PAR_C LLAV_A subrutIf programa  LLAV_C  { generaIntermediaIf();   
+                                                                                                        printf("\nREGLA 22: <decisiones>-->IF PAR_A <condicion> <conectLog> <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
             
-            | IF PAR_A subrutIf2 NOT condicion subrutIf PAR_C LLAV_A  programa LLAV_C  {sacarDePila(&pilaCondicion,&condicionPtr,sizeof(condicionPtr));                                                                                    
-                                                                                      decisionesPtr=crearNodo("IF",condicionPtr,programaPtr);
-                                                                                        if(!sacarDePila(&pilaPrograma,&programaPtr,sizeof(programaPtr)))
-                                                                                          programaPtr=NULL;
-                                                                                                printf("\nREGLA 26: <decisiones>-->IF PAR_A NOT <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
-            | IF PAR_A condicion subrutIf PAR_C LLAV_A programa LLAV_C  {                   
-                                                                                          sacarDePila(&pilaCondicion,&condicionPtr,sizeof(condicionPtr));                                                                                    
-                                                                                    decisionesPtr=crearNodo("IF",condicionPtr,programaPtr);
-                                                                                     if(!sacarDePila(&pilaPrograma,&programaPtr,sizeof(programaPtr)))
-                                                                                          programaPtr=NULL;
-                                                                                     printf("\nREGLA 27: <decisiones>-->IF PAR_A <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
+            | IF PAR_A subrutIf2 NOT condicion subrutIf PAR_C LLAV_A  programa LLAV_C  {generaIntermediaIf();  
+                                                                                          printf("\nREGLA 23: <decisiones>-->IF PAR_A NOT <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
+            | IF PAR_A condicion subrutIf PAR_C LLAV_A programa LLAV_C  {    generaIntermediaIf();             
+                                                                            printf("\nREGLA 24: <decisiones>-->IF PAR_A <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
                                                                                      
-subrutIf: /* vacio */ { if(programaPtr!=NULL){
-                                                ponerEnPila(&pilaPrograma,&programaPtr,sizeof(programaPtr));
-                                                programaPtr=NULL;
-                                          }
-                                          else{
-                                                if(sentenciaPtr!=NULL)
-                                                      ponerEnPila(&pilaPrograma,&sentenciaPtr,sizeof(sentenciaPtr));
-                                          }
-                        ponerEnPila(&pilaCondicion,&condicionPtr,sizeof(condicionPtr));
-                        isNegado=0;
-                        }
+subrutIf: /* vacio */ { 
+                       if(programaPtr!=NULL)
+                       {
+                         ponerEnPila(&pilaPrograma,&programaPtr,sizeof(programaPtr));
+                         programaPtr=NULL;
+                       }
+                       else
+                       {
+                       if(sentenciaPtr!=NULL)
+                           ponerEnPila(&pilaPrograma,&sentenciaPtr,sizeof(sentenciaPtr));
+                       }
+                       ponerEnPila(&pilaCondicion,&condicionPtr,sizeof(condicionPtr));
+                       isNegado=0;
+                      }
 
-subrutIf3: /* vacio */ { if(programaPtr!=NULL){
-                                                ponerEnPila(&pilaPrograma,&programaPtr,sizeof(programaPtr));
-                                                programaPtr=NULL;
-                                          }
-                                          else{
-                                                if(sentenciaPtr!=NULL)
-                                                      ponerEnPila(&pilaPrograma,&sentenciaPtr,sizeof(sentenciaPtr));
-                                          }}
+subrutIf3: /* vacio */ { 
+                        if(programaPtr!=NULL)
+                        {
+                         ponerEnPila(&pilaPrograma,&programaPtr,sizeof(programaPtr));
+                         programaPtr=NULL;
+                        }
+                        else
+                        {
+                        if(sentenciaPtr!=NULL)
+                           ponerEnPila(&pilaPrograma,&sentenciaPtr,sizeof(sentenciaPtr));
+                        }
+                       }
 subrutIf2:/* vacio */ {isNegado=1;}
 
 subrutIf4:/* vacio */ {condicionPtr = crearNodo(conector,condicionPtrIzq,condicionPtr);}
 
-conectLog: AND  {condicionPtrIzq = condicionPtr; strcpy(conector,"AND");}
-           |OR   {condicionPtrIzq = condicionPtr; strcpy(conector,"OR");}
+conectLog: AND  {condicionPtrIzq = condicionPtr; strcpy(conector,"AND"); printf("\nREGLA 25: <conectLog>-->AND\n");} 
+           |OR  {condicionPtrIzq = condicionPtr; strcpy(conector,"OR"); printf("\nREGLA 26: <conectLog>-->OR\n");}
                   
 
-ciclo : WHILE PAR_A condicion conectLog  condicion subrutIf4 subrutIf PAR_C LLAV_A programa LLAV_C {       sacarDePila(&pilaCondicion,&condicionPtr,sizeof(condicionPtr));                                                                                                                                                        
-                                                                                     cicloPtr = crearNodo("WHILE",condicionPtr,programaPtr);
-                                                                                    if(!sacarDePila(&pilaPrograma,&programaPtr,sizeof(programaPtr)))
-                                                                                          programaPtr=NULL;
-                                                                                                printf("\nREGLA 28: <ciclo>-->WHILE PAR_A <condicion> AND <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
-        | WHILE PAR_A NOT subrutIf2 condicion subrutIf PAR_C LLAV_A programa LLAV_C {
-                                                                                       sacarDePila(&pilaCondicion,&condicionPtr,sizeof(condicionPtr));                                                                                                                                                        
-                                                                                cicloPtr = crearNodo("WHILE",condicionPtr,programaPtr);
-                                                                                    if(!sacarDePila(&pilaPrograma,&programaPtr,sizeof(programaPtr)))
-                                                                                          programaPtr=NULL;  printf("\nREGLA 30: <ciclo>-->WHILE PAR_A NOT <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
-        | WHILE PAR_A condicion PAR_C subrutIf LLAV_A programa LLAV_C {   sacarDePila(&pilaCondicion,&condicionPtr,sizeof(condicionPtr));                                                                                                                                                        
-                                                                                cicloPtr = crearNodo("WHILE",condicionPtr,programaPtr);
-                                                                                    if(!sacarDePila(&pilaPrograma,&programaPtr,sizeof(programaPtr)))
-                                                                                          programaPtr=NULL;  
-                                                                              printf("\nREGLA 31: <ciclo>-->WHILE PAR_A <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
+ciclo : WHILE PAR_A condicion conectLog  condicion subrutIf4 subrutIf PAR_C LLAV_A programa LLAV_C {      generaIntermediaWhile();
+                                                                                                printf("\nREGLA 27: <ciclo>-->WHILE PAR_A <condicion> AND <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
+        | WHILE PAR_A NOT subrutIf2 condicion subrutIf PAR_C LLAV_A programa LLAV_C {generaIntermediaWhile();
+                                                                                         printf("\nREGLA 28: <ciclo>-->WHILE PAR_A NOT <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
+        | WHILE PAR_A condicion PAR_C subrutIf LLAV_A programa LLAV_C {   generaIntermediaWhile(); 
+                                                                              printf("\nREGLA 29: <ciclo>-->WHILE PAR_A <condicion> PAR_C LLAV_A <programa> LLAV_C\n");}
 
 escritura : WRITE ID          {posEnTabla=chequearVarEnTabla($<str_val>2,yylineno);
+                                    esVariableNumerica(posEnTabla,yylineno);
                                     escrituraPtr=crearNodo("WRITE",crearHoja($<str_val>2,tablaSimb[posEnTabla].tipoDeDato),NULL);
-                                          printf("\nREGLA 32: <escritura>-->WRITE ID\n");}
+                                          printf("\nREGLA 30: <escritura>-->WRITE ID\n");}
           | WRITE CTE_STRING  {escrituraPtr=crearNodo("WRITE",crearHoja($<str_val>2,CteString),NULL);
-                                    printf("\nREGLA 33: <escritura>-->WRITE CTE_STRING\n");}
+                                    printf("\nREGLA 31: <escritura>-->WRITE CTE_STRING\n");}
 
 lectura : READ ID             {posEnTabla=chequearVarEnTabla($<str_val>2,yylineno);
                                     lecturaPtr= crearNodo("READ",crearHoja($<str_val>2,tablaSimb[posEnTabla].tipoDeDato),NULL);
-                                    printf("\nREGLA 34: <lectura>-->READ ID\n");}
+                                    printf("\nREGLA 32: <lectura>-->READ ID\n");}
 
-condicion : opera oplog opera   {sacarDePila(&pilaOperadoresCond,&operDerPtr,sizeof(operDerPtr));
-                                    sacarDePila(&pilaOperadoresCond,&operIzqPtr,sizeof(operDerPtr));
-                                    if(isNegado)
-                                          invertirCondicion(compara);
-                                    condicionPtr=crearNodo(compara,operIzqPtr,operDerPtr);
-                                    printf("\nREGLA 35:<condicion>--><opera> <oplog> <opera>\n");}
-            | funcionlist      {printf("\nREGLA 36:<condicion>--><funcionList>\n");}
+condicion : opera oplog opera  {
+                                 sacarDePila(&pilaOperadoresCond,&operDerPtr,sizeof(operDerPtr));
+                                 sacarDePila(&pilaOperadoresCond,&operIzqPtr,sizeof(operDerPtr));
+                                 if(isNegado)
+                                    invertirCondicion(compara);
+                                 errorDeCompatibilidadOperadores(&operIzqPtr,&operDerPtr,yylineno);
+                                 condicionPtr=crearNodo(compara,operIzqPtr,operDerPtr);
+                                 printf("\nREGLA 33:<condicion>--><opera> <oplog> <opera>\n");
+                               }
+            | funcionlist      { 
+                                 condicionPtr = inlistBuscarPtr;
+                                 printf("\nREGLA 34:<condicion>--><funcionList>\n");
+                               }
 
 opera: CONST_ENT        {auxCond =crearHoja($<str_val>1,CteInt);
                               ponerEnPila(&pilaOperadoresCond,&auxCond,sizeof(condicionPtr));
-                              printf("\nREGLA 37: <opera>-->CONST_ENT\n");}
+                              printf("\nREGLA 35: <opera>-->CONST_ENT\n");}
       | CONST_REAL      {auxCond=crearHoja($<str_val>1,CteFloat);
                               ponerEnPila(&pilaOperadoresCond,&auxCond,sizeof(condicionPtr));
-                              printf("\nREGLA 38: <opera>-->CONST_REAL\n");}
-      | ID              {chequearVarEnTabla($<str_val>1,yylineno);
-                        auxCond = crearHoja($<str_val>1,CteString);
+                              printf("\nREGLA 36: <opera>-->CONST_REAL\n");}
+      | ID              {posEnTabla=chequearVarEnTabla($<str_val>1,yylineno);
+                         auxCond = crearHoja($<str_val>1,tablaSimb[posEnTabla].tipoDeDato);
                               ponerEnPila(&pilaOperadoresCond,&auxCond,sizeof(condicionPtr));
-                              printf("\nREGLA 39: <opera>-->ID\n");}
+                              printf("\nREGLA 37: <opera>-->ID\n");}
       ;
 
-oplog: OP_MAYEIGU       {strcpy(compara,"BLT");
-                              printf("\nREGLA 40: <opera>-->OP_MAYEIGU\n");}
-    | OP_MENEIGU         {strcpy(compara,"BGT");
-                              printf("\nREGLA 41: <opera>-->OP_MENEIGU\n");}
+oplog: OP_MAYEIGU          {strcpy(compara,"BLT");
+                              printf("\nREGLA 38: <opera>-->OP_MAYEIGU\n");}
+    | OP_MENEIGU           {strcpy(compara,"BGT");
+                              printf("\nREGLA 39: <opera>-->OP_MENEIGU\n");}
     | OP_IGUAL             {strcpy(compara,"BNE");
-                              printf("\nREGLA 42: <opera>-->OP_IGUAL\n");}
-    | OP_MAY              {strcpy(compara,"BLE");
-                              printf("\nREGLA 43: <opera>-->OP_MAY\n");}
-    | OP_MEN             {strcpy(compara,"BGE");
-                              printf("\nREGLA 44: <opera>-->OP_MEN\n");}
-    | OP_DIF             {strcpy(compara,"BNQ");
-                              printf("\nREGLA 45: <opera>-->OP_DIF\n");}
+                              printf("\nREGLA 40: <opera>-->OP_IGUAL\n");}
+    | OP_MAY               {strcpy(compara,"BLE");
+                              printf("\nREGLA 41: <opera>-->OP_MAY\n");}
+    | OP_MEN               {strcpy(compara,"BGE");
+                              printf("\nREGLA 42: <opera>-->OP_MEN\n");}
+    | OP_DIF               {strcpy(compara,"BNQ");
+                              printf("\nREGLA 43: <opera>-->OP_DIF\n");}
     ;
 
-funcionlist: INLIST PAR_A ID {chequearVarEnTabla($<str_val>3,yylineno);} PYC COR_A {  crearNodo("OP_ASIG",crearHoja("__repe",Integer),crearHoja("-1",CteInt));} 
+funcionlist: INLIST PAR_A ID {posEnTabla=chequearVarEnTabla($<str_val>3,yylineno);} PYC COR_A {
+                                                                                    
+                                                                                    sprintf(inlistAux, "__repe%d",++cantidadInlist);
+                                                                                    sprintf(inlistAux2, "__buscar%d",cantidadInlist);
+                                                                                    auxInlist1=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("-1",CteInt));
+                                                                                    int tipoDatoID = tablaSimb[posEnTabla].tipoDeDato;
+                                                                                    auxInlist2=crearNodo("OP_ASIG",crearHoja(inlistAux2,tipoDatoID),crearHoja($<str_val>3,tipoDatoID));
+                                                                                    colocarEnTablaSimb(inlistAux,0,yylineno,0);
+                                                                                    tablaSimb[cuentaRegs-1].tipoDeDato = Integer;
+                                                                                    colocarEnTablaSimb(inlistAux2,0,yylineno,0);
+                                                                                    tablaSimb[cuentaRegs-1].tipoDeDato = tipoDatoID;
+                                                                                    inlistPtr=crearNodo("BUSCAR",auxInlist2,auxInlist1);} 
                                           
-                                          list COR_C PAR_C {printf("\nREGLA 46: <funcionlist>-->INLIST PAR_A ID PYC COR_A <list> COR_C PAR_C\n");}
-
-list: list PYC var      
-      | var             {printf("\nREGLA 48: <list>--><var>\n");}
+                                                                                                list COR_C PAR_C {
+                                                                                                                  inlistBuscarPtr=crearNodo("BNE",inlistBuscarPtr,crearHoja("1",CteInt));
+                                                                                                                  printf("\nREGLA 44: <funcionlist>-->INLIST PAR_A ID PYC COR_A <list> COR_C PAR_C\n");
+                                                                                                                 }
+list: list PYC var      {
+                           auxInlist1=crearNodo("BNE",crearHoja(inlistAux2,tipoDatoID),inlistExprePtr);
+                           auxInlist2=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("1",CteInt));
+                           auxInlist1=crearNodo("IF",auxInlist1,auxInlist2);
+                           inlistBuscarPtr=crearNodo("BUSCAR",inlistBuscarPtr,auxInlist1);
+                        }
+      | var             {  auxInlist1=crearNodo("BNE",crearHoja(inlistAux2,tipoDatoID),inlistExprePtr);
+                           auxInlist2=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("1",CteInt));
+                           auxInlist1=crearNodo("IF",auxInlist1,auxInlist2);
+                           inlistBuscarPtr=crearNodo("BUSCAR",inlistPtr,auxInlist1);
+                           printf("\nREGLA 48: <list>--><var>\n");
+                        }
 
 var: expresion           {
-                                    printf("\nREGLA 49: <list>--><expresion>\n");}
+                           sacarDePila(&pilaExpresion,&inlistExprePtr,sizeof(exprPtr));
+                           printf("\nREGLA 45: <list>--><expresion>\n");
+                         }
 
 asignacion: ID OP_ASIG {strcpy(str_aux2,$<str_val>1);} expresion	    
-                                                {     
-                                                      posEnTabla=chequearVarEnTabla($<str_val>1,yylineno); //hay que ver si es una cte
-                                                      sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
-                                                        
-                                                      asigPtr = crearNodo("OP_ASIG",crearHoja(str_aux2,tablaSimb[posEnTabla].tipoDeDato),exprPtr) ;
-                                                      //verificarTipoDato(&asigPtr,yylineno);
-                                                      printf("\nREGLA 50: <asignacion>-->ID OP_ASIG <expresion>\n");}
+                                                        {     
+                                                          posEnTabla=chequearVarEnTabla($<str_val>1,yylineno); //hay que ver si es una cte
+                                                          sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
+                                                          asigPtr = crearNodo("OP_ASIG",crearHoja(str_aux2,tablaSimb[posEnTabla].tipoDeDato),exprPtr) ;
+                                                          verificarTipoDato(&asigPtr,yylineno);
+                                                          printf("\nREGLA 46: <asignacion>-->ID OP_ASIG <expresion>\n");
+                                                         }
             | ID OP_ASIG {strcpy(str_aux2,$<str_val>1);} CTE_STRING       
-                                                {     chequearVarEnTabla($<str_val>1,yylineno);
-                                                      asigPtr = crearNodo("OP_ASIG",crearHoja(str_aux2,CteString),crearHoja($<str_val>4,CteString)) ;
-                                                      printf("\nREGLA 51: <asignacion>-->ID OP_ASIG CTE_STRING\n");}
-            
-		
-expresion: termino                        {
-                                                      sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
-                                                      ponerEnPila(&pilaExpresion,&terminoPtr,sizeof(terminoPtr)); 
-                                                      printf("\nREGLA 52: <expresion>--><termino>\n");}
-		   | expresion OP_SUMA termino {
-                                                      sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
-                                                      sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
-                                                      exprPtr = crearNodo("OP_SUMA",exprPtr,terminoPtr);
-                                                      ponerEnPila(&pilaExpresion,&exprPtr,sizeof(exprPtr));    
-                                                      printf("\nREGLA 53: <expresion>--><expresion> OP_SUMA <termino>\n");}
-		   | expresion OP_RESTA termino {
-                                                      sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
-                                                      sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
-                                                      exprPtr = crearNodo("OP_RESTA",exprPtr,terminoPtr);
-                                                      ponerEnPila(&pilaExpresion,&exprPtr,sizeof(exprPtr));       
-                                                      printf("\nREGLA 54: <expresion>--><expresion> OP_RESTA <termino>\n");}
+                                                         {         
+                                                          chequearVarEnTabla($<str_val>1,yylineno);
+                                                          asigPtr = crearNodo("OP_ASIG",crearHoja(str_aux2,CteString),crearHoja($<str_val>4,CteString)) ;
+                                                          verificarTipoDato(&asigPtr,yylineno);
+                                                          printf("\nREGLA 47: <asignacion>-->ID OP_ASIG CTE_STRING\n");}	
+expresion: termino                                       {
+                                                          sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
+                                                          ponerEnPila(&pilaExpresion,&terminoPtr,sizeof(terminoPtr)); 
+                                                          printf("\nREGLA 48: <expresion>--><termino>\n");}
+		   | expresion OP_SUMA termino               {
+                                                          sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
+                                                          sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
+                                                          exprPtr = crearNodo("OP_SUMA",exprPtr,terminoPtr);
+                                                          ponerEnPila(&pilaExpresion,&exprPtr,sizeof(exprPtr));    
+                                                          printf("\nREGLA 49: <expresion>--><expresion> OP_SUMA <termino>\n");}
+		   | expresion OP_RESTA termino              {
+                                                          sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
+                                                          sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
+                                                          exprPtr = crearNodo("OP_RESTA",exprPtr,terminoPtr);
+                                                          ponerEnPila(&pilaExpresion,&exprPtr,sizeof(exprPtr));       
+                                                          printf("\nREGLA 50: <expresion>--><expresion> OP_RESTA <termino>\n");
+                                                         }
                | OP_RESTA expresion %prec MENOS_UNARIO 
-                                                      { 
-                                                       sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
-                                                       exprPtr=crearNodo("OP_RESTA",exprPtr,NULL);
-                                                       ponerEnPila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
-                                                                  printf("\nREGLA 55: <expresion>-->OP_RESTA <expresion>\n");}
+                                                         { 
+                                                          sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
+                                                          exprPtr=crearNodo("OP_RESTA",exprPtr,NULL);
+                                                          ponerEnPila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
+                                                          printf("\nREGLA 51: <expresion>-->OP_RESTA <expresion>\n");
+                                                         }
 		   
 
-termino:  factor                          {
-                                                      sacarDePila(&pilaFactor,&factorPtr,sizeof(factorPtr));
-                                                      ponerEnPila(&pilaTermino,&factorPtr,sizeof(factorPtr)); 
-                                                      printf("\nREGLA 56: <termino>--><factor>\n");}
-		 | termino OP_MULT factor	{
-                                                      sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
-                                                      sacarDePila(&pilaFactor,&factorPtr,sizeof(factorPtr));
-                                                      terminoPtr=crearNodo("OP_MULT",terminoPtr,factorPtr);
-                                                      ponerEnPila(&pilaTermino,&terminoPtr,sizeof(terminoPtr)); 
-                                                      printf("\nREGLA 57: <termino>--><termino> OP_MULT <factor>\n");}
-		 | termino OP_DIV factor	{ 
-                                                      sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
-                                                      sacarDePila(&pilaFactor,&factorPtr,sizeof(factorPtr));
-                                                      terminoPtr=crearNodo("OP_DIV",terminoPtr,factorPtr); 
-                                                      ponerEnPila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
-                                                      printf("\nREGLA 58: <termino>--><termino> OP_DIV <factor>\n");}
-
-factor : CONST_ENT                         {sprintf(str_aux, "%d",yylval.intval);
-                                                factorPtr = crearHoja(str_aux ,CteInt) ;
-                                                ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
-                                                            printf("\nREGLA 59: <factor>-->CONST_ENT\n");
-                                                                        }
-		| ID                            {posEnTabla=chequearVarEnTabla(yylval.str_val,yylineno);
-                                                      factorPtr = crearHoja(yylval.str_val,tablaSimb[posEnTabla].tipoDeDato);
-                                                      ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
-                                                            printf("\nREGLA 60: <factor>-->ID\n");
-                                                                  }
-            | CONST_REAL                         {sprintf(str_aux, "%f",yylval.val);
-                                                      factorPtr = crearHoja(str_aux,CteFloat) ;
-                                                                        ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
-                                                            printf("\nREGLA 61: <factor>-->CONST_REAL\n");}
-		| PAR_A   expresion  PAR_C                               {
-                                                                        sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
-                                                                        ponerEnPila(&pilaFactor,&exprPtr,sizeof(exprPtr));
-                                                                        
-                                                                       printf("\nREGLA 62: <factor>-->PAR_A <expresion> PAR_C\n");}
-            | PAR_A  expresion MOD expresion PAR_C      {sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
-                                                           sacarDePila(&pilaExpresion,&auxExprePtr,sizeof(exprPtr));
-                                                           factorPtr=crearNodo("DIV",auxExprePtr,exprPtr);
+termino:  factor                                         {
+                                                          sacarDePila(&pilaFactor,&factorPtr,sizeof(factorPtr));
+                                                          ponerEnPila(&pilaTermino,&factorPtr,sizeof(factorPtr)); 
+                                                          printf("\nREGLA 52: <termino>--><factor>\n");}
+		 | termino OP_MULT factor	               {
+                                                          sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
+                                                          sacarDePila(&pilaFactor,&factorPtr,sizeof(factorPtr));
+                                                          terminoPtr=crearNodo("OP_MULT",terminoPtr,factorPtr);
+                                                          ponerEnPila(&pilaTermino,&terminoPtr,sizeof(terminoPtr)); 
+                                                          printf("\nREGLA 53: <termino>--><termino> OP_MULT <factor>\n");}
+		 | termino OP_DIV factor            	   { 
+                                                          sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
+                                                          sacarDePila(&pilaFactor,&factorPtr,sizeof(factorPtr));
+                                                          terminoPtr=crearNodo("OP_DIV",terminoPtr,factorPtr); 
+                                                          ponerEnPila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
+                                                          printf("\nREGLA 54: <termino>--><termino> OP_DIV <factor>\n");
+                                                         }
+factor : CONST_ENT                                       {
+                                                          sprintf(str_aux, "%d",yylval.intval);
+                                                          factorPtr = crearHoja(str_aux ,CteInt) ;
                                                           ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
-                                                            printf("\nREGLA 63: <factor>-->PAR_A <expresion> MOD <expresion> PAR_C\n");}
-            | PAR_A  expresion DIV expresion PAR_C       {sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
-                                                           sacarDePila(&pilaExpresion,&auxExprePtr,sizeof(exprPtr));
-                                                           factorPtr=crearNodo("DIV",auxExprePtr,exprPtr);
-                                                          ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));}
+                                                          printf("\nREGLA 55: <factor>-->CONST_ENT\n");
+                                                         }
+		| ID                                         {         
+                                                          posEnTabla=chequearVarEnTabla(yylval.str_val,yylineno);
+                                                          factorPtr = crearHoja(yylval.str_val,tablaSimb[posEnTabla].tipoDeDato);
+                                                          ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
+                                                          printf("\nREGLA 56: <factor>-->ID\n");
+                                                         }
+            | CONST_REAL                                 {
+                                                          sprintf(str_aux, "%f",yylval.val);
+                                                          factorPtr = crearHoja(str_aux,CteFloat) ;
+                                                          ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
+                                                          printf("\nREGLA 57: <factor>-->CONST_REAL\n");}
+		| PAR_A   expresion  PAR_C                   {
+                                                          sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
+                                                          ponerEnPila(&pilaFactor,&exprPtr,sizeof(exprPtr));             
+                                                          printf("\nREGLA 58: <factor>-->PAR_A <expresion> PAR_C\n");}
+            | PAR_A  expresion MOD expresion PAR_C       { 
+                                                          sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
+                                                          sacarDePila(&pilaExpresion,&auxExprePtr,sizeof(exprPtr));
+                                                          factorPtr=crearNodo("MOD",auxExprePtr,exprPtr);
+                                                          ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
+                                                          printf("\nREGLA 59: <factor>-->PAR_A <expresion> MOD <expresion> PAR_C\n");}
+            | PAR_A  expresion DIV expresion PAR_C       {
+                                                          sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
+                                                          sacarDePila(&pilaExpresion,&auxExprePtr,sizeof(exprPtr));
+                                                          factorPtr=crearNodo("DIV",auxExprePtr,exprPtr);
+                                                          ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
+                                                          printf("\nREGLA 60: <factor>-->PAR_A <expresion> DIV <expresion> PAR_C\n");
+                                                         }
                                                           
  
            
