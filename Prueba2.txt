@@ -1,0 +1,10 @@
+DECVAR
+var3 ;var9 : float     
+var4;var6;var7 : integer
+a;b;c;e;f;d;z : integer
+ENDDEC
+
+read a;
+read b;
+z: a+5+3+b;
+write z;

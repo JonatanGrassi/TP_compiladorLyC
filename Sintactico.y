@@ -48,8 +48,8 @@ char *str_val;
 %right MENOS_UNARIO
 %left OP_RESTA OP_SUMA
 %%
+iniciopro: DECVAR declaracion ENDDEC {auxOp=0;} programa   {grabarTabla();printf("\n---INTERMEDIA---(ARBOL RECORRIDO EN POSTORDEN)\n");postOrden(&programaPtr,intermedia);tree_print_dot(&programaPtr,graph);generaAssembler(&programaPtr);}
 
-iniciopro: DECVAR declaracion ENDDEC programa   {grabarTabla();tree_print_dot(&programaPtr,graph);}
           | escrituraSinVar 
 
 
@@ -58,25 +58,28 @@ programa: sentencia 	                  {
                                           if(programaPtr!=NULL)
                                           {    
                                               sprintf(str_aux, "CUERPO%d",cuerpoCont++);
-							    programaPtr = crearNodo(str_aux, sentenciaPtr, NULL);
+							                            programaPtr = crearNodo(str_aux, sentenciaPtr, NULL);
                                              
-							} else   
+						                             	} else   
                                           {
-							    programaPtr = sentenciaPtr;
-			                        }}
+							                                 programaPtr = sentenciaPtr;
+			                                   }
+                                         }
 	      | programa sentencia          
                                           {
                                                 if(programaPtr!=NULL)
                                           {     
                            
-                                              sprintf(str_aux, "CUERPO%d",cuerpoCont++);
-							    programaPtr = crearNodo(str_aux, programaPtr, sentenciaPtr);
-							} else 
+                                          sprintf(str_aux, "CUERPO%d",cuerpoCont++);
+							                            programaPtr = crearNodo(str_aux, programaPtr, sentenciaPtr);
+							                            } 
+                                          else 
                                           {    
                                              
-                                              sprintf(str_aux, "CUERPO%d",cuerpoCont++);
-							    programaPtr = crearNodo(str_aux, sentenciaPtr,NULL);
-			                        }}
+                                            sprintf(str_aux, "CUERPO%d",cuerpoCont++);
+							                                   programaPtr = crearNodo(str_aux, sentenciaPtr,NULL);
+			                                    }
+                                          }
 
                                           
 
@@ -169,7 +172,8 @@ escritura : WRITE ID          {posEnTabla=chequearVarEnTabla($<str_val>2,yylinen
                                     esVariableNumerica(posEnTabla,yylineno);
                                     escrituraPtr=crearNodo("WRITE",crearHoja($<str_val>2,tablaSimb[posEnTabla].tipoDeDato),NULL);
                                           printf("\nREGLA 30: <escritura>-->WRITE ID\n");}
-          | WRITE CTE_STRING  {escrituraPtr=crearNodo("WRITE",crearHoja($<str_val>2,CteString),NULL);
+          | WRITE CTE_STRING  { sprintf(str_aux, "_%s",$<str_val>2);
+                                escrituraPtr=crearNodo("WRITE",crearHoja(str_aux,CteString),NULL);
                                     printf("\nREGLA 31: <escritura>-->WRITE CTE_STRING\n");}
 
 lectura : READ ID             {posEnTabla=chequearVarEnTabla($<str_val>2,yylineno);
@@ -181,7 +185,7 @@ condicion : opera oplog opera  {
                                  sacarDePila(&pilaOperadoresCond,&operIzqPtr,sizeof(operDerPtr));
                                  if(isNegado)
                                     invertirCondicion(compara);
-                                 errorDeCompatibilidadOperadores(&operIzqPtr,&operDerPtr,yylineno);
+                                 //errorDeCompatibilidadOperadores(&operIzqPtr,&operDerPtr,yylineno);
                                  condicionPtr=crearNodo(compara,operIzqPtr,operDerPtr);
                                  printf("\nREGLA 33:<condicion>--><opera> <oplog> <opera>\n");
                                }
@@ -190,17 +194,10 @@ condicion : opera oplog opera  {
                                  printf("\nREGLA 34:<condicion>--><funcionList>\n");
                                }
 
-opera: CONST_ENT        {auxCond =crearHoja($<str_val>1,CteInt);
-                              ponerEnPila(&pilaOperadoresCond,&auxCond,sizeof(condicionPtr));
-                              printf("\nREGLA 35: <opera>-->CONST_ENT\n");}
-      | CONST_REAL      {auxCond=crearHoja($<str_val>1,CteFloat);
-                              ponerEnPila(&pilaOperadoresCond,&auxCond,sizeof(condicionPtr));
-                              printf("\nREGLA 36: <opera>-->CONST_REAL\n");}
-      | ID              {posEnTabla=chequearVarEnTabla($<str_val>1,yylineno);
-                         auxCond = crearHoja($<str_val>1,tablaSimb[posEnTabla].tipoDeDato);
-                              ponerEnPila(&pilaOperadoresCond,&auxCond,sizeof(condicionPtr));
-                              printf("\nREGLA 37: <opera>-->ID\n");}
-      ;
+opera: expresion        {sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
+                          //auxCond =crearHoja($<str_val>1,CteInt);
+                              ponerEnPila(&pilaOperadoresCond,&exprPtr,sizeof(exprPtr));}
+      
 
 oplog: OP_MAYEIGU          {strcpy(compara,"BLT");
                               printf("\nREGLA 38: <opera>-->OP_MAYEIGU\n");}
@@ -220,6 +217,7 @@ funcionlist: INLIST PAR_A ID {posEnTabla=chequearVarEnTabla($<str_val>3,yylineno
                                                                                     
                                                                                     sprintf(inlistAux, "__repe%d",++cantidadInlist);
                                                                                     sprintf(inlistAux2, "__buscar%d",cantidadInlist);
+                                                                                    colocarEnTablaSimb("-1",1, yylineno,CteInt);
                                                                                     auxInlist1=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("-1",CteInt));
                                                                                     int tipoDatoID = tablaSimb[posEnTabla].tipoDeDato;
                                                                                     auxInlist2=crearNodo("OP_ASIG",crearHoja(inlistAux2,tipoDatoID),crearHoja($<str_val>3,tipoDatoID));
@@ -269,13 +267,15 @@ expresion: termino                                       {
                                                           sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
                                                           ponerEnPila(&pilaExpresion,&terminoPtr,sizeof(terminoPtr)); 
                                                           printf("\nREGLA 48: <expresion>--><termino>\n");}
-		   | expresion OP_SUMA termino               {
+		   | expresion OP_SUMA termino               {        
+                                                          auxOp++;
                                                           sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
                                                           sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
                                                           exprPtr = crearNodo("OP_SUMA",exprPtr,terminoPtr);
                                                           ponerEnPila(&pilaExpresion,&exprPtr,sizeof(exprPtr));    
                                                           printf("\nREGLA 49: <expresion>--><expresion> OP_SUMA <termino>\n");}
-		   | expresion OP_RESTA termino              {
+		   | expresion OP_RESTA termino              {        
+                                                          auxOp++;
                                                           sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
                                                           sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
                                                           exprPtr = crearNodo("OP_RESTA",exprPtr,terminoPtr);
@@ -284,6 +284,7 @@ expresion: termino                                       {
                                                          }
                | OP_RESTA expresion %prec MENOS_UNARIO 
                                                          { 
+                                                          auxOp++;
                                                           sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
                                                           exprPtr=crearNodo("OP_RESTA",exprPtr,NULL);
                                                           ponerEnPila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
@@ -295,13 +296,15 @@ termino:  factor                                         {
                                                           sacarDePila(&pilaFactor,&factorPtr,sizeof(factorPtr));
                                                           ponerEnPila(&pilaTermino,&factorPtr,sizeof(factorPtr)); 
                                                           printf("\nREGLA 52: <termino>--><factor>\n");}
-		 | termino OP_MULT factor	               {
+		 | termino OP_MULT factor	               {            
+                                                          auxOp++;
                                                           sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
                                                           sacarDePila(&pilaFactor,&factorPtr,sizeof(factorPtr));
                                                           terminoPtr=crearNodo("OP_MULT",terminoPtr,factorPtr);
                                                           ponerEnPila(&pilaTermino,&terminoPtr,sizeof(terminoPtr)); 
                                                           printf("\nREGLA 53: <termino>--><termino> OP_MULT <factor>\n");}
-		 | termino OP_DIV factor            	   { 
+		 | termino OP_DIV factor            	   {            
+                                                          auxOp++;
                                                           sacarDePila(&pilaTermino,&terminoPtr,sizeof(terminoPtr));
                                                           sacarDePila(&pilaFactor,&factorPtr,sizeof(factorPtr));
                                                           terminoPtr=crearNodo("OP_DIV",terminoPtr,factorPtr); 
@@ -309,7 +312,7 @@ termino:  factor                                         {
                                                           printf("\nREGLA 54: <termino>--><termino> OP_DIV <factor>\n");
                                                          }
 factor : CONST_ENT                                       {
-                                                          sprintf(str_aux, "%d",yylval.intval);
+                                                          sprintf(str_aux, "_%d",yylval.intval);
                                                           factorPtr = crearHoja(str_aux ,CteInt) ;
                                                           ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
                                                           printf("\nREGLA 55: <factor>-->CONST_ENT\n");
@@ -321,7 +324,7 @@ factor : CONST_ENT                                       {
                                                           printf("\nREGLA 56: <factor>-->ID\n");
                                                          }
             | CONST_REAL                                 {
-                                                          sprintf(str_aux, "%f",yylval.val);
+                                                          sprintf(str_aux, "_%f",yylval.val);
                                                           factorPtr = crearHoja(str_aux,CteFloat) ;
                                                           ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
                                                           printf("\nREGLA 57: <factor>-->CONST_REAL\n");}

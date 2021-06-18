@@ -5,6 +5,10 @@
 
 char msg[100];
 char aux_str[50];
+char auxAssembE[50];
+char auxAssembR[50];
+int auxEntero = 0;
+int auxReal = 0;
 
 void colocarEnTablaSimb(char *ptr, int esCte, int linea, int tDatoCte)
 {
@@ -289,29 +293,30 @@ tArbol *hijoMasIzq(tArbol *p)
 	return NULL;
 }
 
-void enOrden(tArbol *p)
+void enOrden(tArbol *p, FILE *pfIntermedia)
 {
 	if (*p)
 	{
-		enOrden(&(*p)->izq);
-		verNodo((*p)->info.dato);
-		enOrden(&(*p)->der);
+		enOrden(&(*p)->izq, pfIntermedia);
+		verNodo((*p)->info.dato, pfIntermedia);
+		enOrden(&(*p)->der, pfIntermedia);
 	}
 }
 
-void postOrden(tArbol *p)
+void postOrden(tArbol *p, FILE *pfIntermedia)
 {
 	if (*p)
 	{
-		postOrden(&(*p)->izq);
-		postOrden(&(*p)->der);
-		verNodo((*p)->info.dato);
+		postOrden(&(*p)->izq, pfIntermedia);
+		postOrden(&(*p)->der, pfIntermedia);
+		verNodo((*p)->info.dato, pfIntermedia);
 	}
 }
 
-void verNodo(const char *p)
+void verNodo(const char *p, FILE *pfIntermedia)
 {
 	printf("%s ", p);
+	fprintf(pfIntermedia, "%s ", p);
 }
 
 void _tree_print_dot_subtree(int nro_padre, tNodo *padre, int nro, tArbol *nodo, FILE *stream)
@@ -374,4 +379,196 @@ int verificarCompatible(int tipo, int tipoAux)
 	if (tipo == CteString && tipoAux == String || tipoAux == CteString && tipo == String)
 		return TRUE;
 	return FALSE;
+}
+
+void generaAssembler(tArbol *intemedia)
+{
+	int i;
+	FILE *pf = fopen("Final.asm", "w+");
+	if (!pf)
+	{
+		printf("Error al guardar el archivo assembler.\n");
+		exit(1);
+	}
+	crearPila(&pilaAssembler);
+	//includes
+	fprintf(pf, "include macros2.asm\n");
+	fprintf(pf, "include number.asm\n\n");
+	fprintf(pf, ".MODEL LARGE\n.STACK 200h\n.386\n.DATA\n\n");
+	fprintf(pf, "%-30s%-20s%-20s\n", "MAXTEXTSIZE", "equ", "40");
+
+	for (i = 0; i < auxOp; i++)
+	{
+		sprintf(auxAssembR, "_auxR%d", i);
+		sprintf(auxAssembE, "_auxE%d", i);
+		fprintf(pf, "%-30s%-20s%-20s\n", auxAssembR, "dd", "0.0");
+		fprintf(pf, "%-30s%-20s%-20s\n", auxAssembE, "dd", "0");
+	}
+
+	for (i = 0; i < cuentaRegs; i++)
+	{
+		fprintf(pf, "%-30s", tablaSimb[i].lexema);
+		switch (tablaSimb[i].tipoDeDato)
+		{
+		case Float:
+			fprintf(pf, "%-20s%-20s", "dd", "?");
+			break;
+		case Integer:
+			fprintf(pf, "%-20s%-20s", "dd", "?");
+			break;
+		case String:
+			fprintf(pf, "%-20s%-20s", "dd", "?");
+			break;
+		case CteFloat:
+			fprintf(pf, "%-20s%-20s", "dd", tablaSimb[i].valor);
+			break;
+		case CteInt:
+			fprintf(pf, "%-20s%-20s", "dd", tablaSimb[i].valor);
+			break;
+		case CteString:
+			fprintf(pf, "%-20s%-20s", "dd", tablaSimb[i].valor);
+			break;
+		}
+		fprintf(pf, "\n");
+	}
+
+	fprintf(pf,"\n.CODE\n.startup\n\tmov AX,@DATA\n\tmov DS,AX\nFINIT\n\n");
+	fprintf(pf, "\n");
+
+	recorrerIntermedia(intemedia, pf);
+
+	fprintf(pf, "\nmov ax, 4c00h\nint 21h\n\n");
+
+	//FUNCIONES PARA MANEJO DE ENTRADA/SALIDA Y CADENAS
+	fprintf(pf,"\nstrlen proc\n\tmov bx, 0\n\tstrl01:\n\tcmp BYTE PTR [si+bx],'$'\n\tje strend\n\tinc bx\n\tjmp strl01\n\tstrend:\n\tret\nstrlen endp\n");
+	fprintf(pf,"\ncopiar proc\n\tcall strlen\n\tcmp bx , MAXTEXTSIZE\n\tjle copiarSizeOk\n\tmov bx , MAXTEXTSIZE\n\tcopiarSizeOk:\n\tmov cx , bx\n\tcld\n\trep movsb\n\tmov al , '$'\n\tmov byte ptr[di],al\n\tret\ncopiar endp\n");
+	fprintf(pf,"\nconcat proc\n\tpush ds\n\tpush si\n\tcall strlen\n\tmov dx , bx\n\tmov si , di\n\tpush es\n\tpop ds\n\tcall strlen\n\tadd di, bx\n\tadd bx, dx\n\tcmp bx , MAXTEXTSIZE\n\tjg concatSizeMal\n\tconcatSizeOk:\n\tmov cx , dx\n\tjmp concatSigo\n\tconcatSizeMal:\n\tsub bx , MAXTEXTSIZE\n\tsub dx , bx\n\tmov cx , dx\n\tconcatSigo:\n\tpush ds\n\tpop es\n\tpop si\n\tpop ds\n\tcld\n\trep movsb\n\tmov al , '$'\n\tmov byte ptr[di],al\n\tret\nconcat endp\n");
+
+	fprintf(pf, "\nEND");
+
+	vaciarPila(&pilaAssembler);
+
+	fclose(pf);
+}
+
+void recorrerIntermedia(tArbol *arbol, FILE *pf)
+{
+	if (*arbol)
+	{
+		recorrerIntermedia(&(*arbol)->izq, pf);
+		recorrerIntermedia(&(*arbol)->der, pf);
+		tratarNodo(arbol, pf);
+	}
+}
+
+void tratarNodo(tArbol *nodo, FILE *pf)
+{
+	int pos, i;
+	tInfo infoHojaDer;
+	tInfo infoHojaIzq;
+	char auxDatoAr[100];
+	strcpy(auxDatoAr, (*nodo)->info.dato);
+	pos = buscarEnTabla(auxDatoAr);
+	if (pos != -1)
+		ponerEnPila(&pilaAssembler, &(*nodo)->info, sizeof(tInfo));
+	else
+	{
+		if (!strcmp(auxDatoAr, "OP_ASIG"))
+		{
+			sacarDePila(&pilaAssembler, &infoHojaDer, sizeof(tInfo));
+			switch (infoHojaDer.tipoDato)
+			{
+			case Integer:
+			case CteInt:
+				sacarDePila(&pilaAssembler, &infoHojaIzq, sizeof(tInfo));
+				fprintf(pf, "fild \t%s\n", infoHojaDer.dato);
+				fprintf(pf, "fistp \t%s\n", infoHojaIzq.dato);
+				break;
+			case Float:
+			case CteFloat:
+				sacarDePila(&pilaAssembler, &infoHojaIzq, sizeof(tInfo));
+				fprintf(pf, "\tfld \t%s\n", infoHojaDer.tipoDato);
+				fprintf(pf, "\tfstp \t%s\n", infoHojaIzq.tipoDato);
+				break;
+			case String:
+			case CteString:
+				sacarDePila(&pilaAssembler, &infoHojaIzq, sizeof(tInfo));
+				fprintf(pf, "mov ax, @DATA\nmov ds, ax\nmov es, ax\n");
+				fprintf(pf, "mov si, OFFSET\t%s\n", infoHojaDer.tipoDato);
+				fprintf(pf, "\tmov di, OFFSET\t%s\n", infoHojaIzq.tipoDato);
+				fprintf(pf, "\tcall copiar\n");
+				break;
+			}
+		}
+
+		if (!strcmp(auxDatoAr, "OP_SUMA"))
+		{
+			sacarDePila(&pilaAssembler, &infoHojaDer, sizeof(tInfo));
+			switch (infoHojaDer.tipoDato)
+			{
+			case CteFloat:
+			case Float:
+				sacarDePila(&pilaAssembler, &infoHojaIzq, sizeof(tInfo));
+				fprintf(pf, "fld \t%s\n", infoHojaIzq.dato);
+				fprintf(pf, "fadd \t%s\n", infoHojaDer.dato);
+				sprintf(auxAssembE, "%s%d", "_auxR", auxReal);
+				fprintf(pf, "fstp \t%s\n", auxAssembR);
+				strcpy(infoHojaIzq.dato, auxAssembR); /// uso el infoHojaizq para no definir otro auxiliar
+				infoHojaIzq.tipoDato = Integer;
+				ponerEnPila(&pilaAssembler, &infoHojaIzq, sizeof(tInfo));
+				auxReal++;
+				break;
+			case CteInt:
+			case Integer:
+				sacarDePila(&pilaAssembler, &infoHojaIzq, sizeof(tInfo));
+				fprintf(pf, "fild \t%s\n", infoHojaIzq.dato);
+				fprintf(pf, "fiadd \t%s\n", infoHojaDer.dato);
+				sprintf(auxAssembE, "%s%d", "_auxE", auxEntero);
+				fprintf(pf, "fistp \t%s\n", auxAssembE);
+				strcpy(infoHojaIzq.dato, auxAssembE);
+				infoHojaIzq.tipoDato = Integer;
+				ponerEnPila(&pilaAssembler, &infoHojaIzq, sizeof(tInfo));
+				auxEntero++;
+				break;
+			}
+		}
+
+		if (!strcmp(auxDatoAr, "WRITE"))
+		{
+			sacarDePila(&pilaAssembler, &infoHojaDer, sizeof(tInfo));
+			switch (infoHojaDer.tipoDato)
+			{
+			case Integer:
+			case CteInt:
+				fprintf(pf, "displayInteger \t%s,3\n",infoHojaDer.dato);
+				break;
+			case Float:
+			case CteFloat:
+				fprintf(pf, "displayFloat \t%s,3\n",infoHojaDer.dato);
+				break;
+			case String:
+			case CteString:
+				fprintf(pf, "displayString \t%s\nn",infoHojaDer.dato);
+				break;
+			}
+		
+		}
+
+		if (!strcmp(auxDatoAr, "READ"))
+		{
+			sacarDePila(&pilaAssembler, &infoHojaDer, sizeof(tInfo));
+			switch (infoHojaDer.tipoDato)
+			{
+			case Integer:
+				fprintf(pf, "getInteger \t%s\n", infoHojaDer.dato);
+				break;
+			case Float:
+				fprintf(pf, "getFloat \t%s\n", infoHojaDer.dato);
+				break;
+			case String:
+				fprintf(pf, "getString \t%s\n", infoHojaDer.dato);
+				break;
+			}
+		}
+	}
 }

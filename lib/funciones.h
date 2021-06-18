@@ -48,6 +48,7 @@ tInfo infoArbol;
 
 FILE *graph;
 FILE *tab;
+FILE *intermedia;
 
 
 typedef struct{
@@ -60,6 +61,7 @@ int longitud;
 tSimbo tablaSimb[TAMANIO_TABLA];
 int cuentaRegs;
 int _cantIds;
+int auxOp;
 
 int verifRangoString(char*ptr,int linea);
 int verifRangoCTE_ENT(char*ptr,int linea);
@@ -80,24 +82,29 @@ int verificarCompatible(int tipo,int tipoAux);
 int buscarEnTabla(char * nombre);
 void grabarTabla();
 tNodo* crearNodo(const char* dato, tNodo *pIzq, tNodo *pDer);
+void postOrden(tArbol *p,FILE* pfIntermedia);
 tNodo* crearHoja(char* dato,int tipo);
 tNodo *copiarDato(tNodo *);
 tArbol * hijoMasIzq(tArbol *p);
-void enOrden(tArbol *p);
-void verNodo(const char *p);
+void enOrden(tArbol *p,FILE* pfIntermedia);
+void verNodo(const char *p,FILE* pfIntermedia);
 void invertirSalto(tArbol *p);
 void generaIntermediaIf();
 void generaIntermediaIfConElse();
 void generaIntermediaWhile();
+void generaAssembler(tArbol* intemedia);
+void recorrerIntermedia(tArbol *arbol,FILE * pf);
+void tratarNodo(tArbol *nodo,FILE *pf);
 
 
 /*Punteros para arbol*/
 tArbol 	asigPtr,			//Puntero de asignaciones
 		exprPtr,			//Puntero de expresiones
-		terminoPtr,			//Puntero de terminos
+		terminopfIntermediatr,			//Puntero de terminos
 		factorPtr,			//Puntero de factores
 		sentenciaPtr,		//Puntero de sentencia				
-		auxBloquePtr,       
+		auxBloquePtr, 
+		terminoPtr,      
 		condicionPtr,
 		auxCond,
 		operDerPtr,
@@ -134,6 +141,7 @@ tPila pilaOperadoresCond;
 tPila pilaPrograma;
 tPila pilaCondicion;
 tPila pilaProgramaFalso;
+tPila pilaAssembler;
 
 void crearPila(tPila *p);
 int  pilaLlena(const tPila *p, unsigned cantBytes);

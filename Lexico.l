@@ -24,8 +24,8 @@ ESPACIO			[" "]
 
 CTE_STRING		\".+\"      
 CONST_ENT	({DIGITO})+
-CARACTERCOM		@|\?|\"|\.|\,|\+|\t|\n|\/|\_|\:|\;|¿|\*|{LETRA}|{DIGITO}|{ESPACIO} 
 CONST_REAL	  ({DIGITO})*"."({DIGITO})+|({DIGITO})+"."({DIGITO})*
+CARACTERCOM		@|\?|\"|\(|\)|\-|\.|\,|\+|\t|\n|\/|\_|\:|\;|¿|\*|{LETRA}|{DIGITO}|{ESPACIO} 
 COMENTARIO  	("-")(\/)({CARACTERCOM})*(("-")(\/)({CARACTERCOM})*(\/)("-"))?({CARACTERCOM})*(\/)("-")
 ID			({LETRA})({LETRA}|{DIGITO})*
 
@@ -154,6 +154,11 @@ int main(int argc,char *argv[])
             printf("\nNo se puede abrir el archivo \n");
             return 1;
           }
+  if ((intermedia = fopen("intermedia.txt", "wt")) == NULL)
+          {
+            printf("\nNo se puede abrir el archivo \n");
+            return 1;
+          }
 	yyparse();
   vaciarPila(&pilaExpresion);
   vaciarPila(&pilaOperadoresCond);
@@ -163,6 +168,7 @@ int main(int argc,char *argv[])
   vaciarPila(&pilaCondicion);
   fclose(yyin);
   fclose(graph);
+  fclose(intermedia);
   return 0;
 }
 

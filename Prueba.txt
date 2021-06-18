@@ -7,7 +7,7 @@ ENDDEC
 
 -/OPERACIONES ARITMETICAS/-
 
-b: a+b*((c-d)/(e+f))+20;
+z: a+b*c-d/(e+f)+20;
 a: (-4) + 18;
 
 -/ERROR DE TIPO/-
