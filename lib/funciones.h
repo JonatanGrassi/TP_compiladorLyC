@@ -62,6 +62,7 @@ tSimbo tablaSimb[TAMANIO_TABLA];
 int cuentaRegs;
 int _cantIds;
 int auxOp;
+char cteFlo[50];
 
 int verifRangoString(char*ptr,int linea);
 int verifRangoCTE_ENT(char*ptr,int linea);
@@ -95,6 +96,8 @@ void generaIntermediaWhile();
 void generaAssembler(tArbol* intemedia);
 void recorrerIntermedia(tArbol *arbol,FILE * pf);
 void tratarNodo(tArbol *nodo,FILE *pf);
+void replace(char *orig, char rep, char busc);
+void cambiarValor(char*auxValor);
 
 
 /*Punteros para arbol*/

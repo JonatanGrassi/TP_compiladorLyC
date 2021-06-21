@@ -48,7 +48,13 @@ char *str_val;
 %right MENOS_UNARIO
 %left OP_RESTA OP_SUMA
 %%
-iniciopro: DECVAR declaracion ENDDEC {auxOp=0;} programa   {grabarTabla();printf("\n---INTERMEDIA---(ARBOL RECORRIDO EN POSTORDEN)\n");postOrden(&programaPtr,intermedia);tree_print_dot(&programaPtr,graph);generaAssembler(&programaPtr);}
+iniciopro: DECVAR declaracion ENDDEC {auxOp=0;} programa   {
+                                                            grabarTabla();
+                                                            printf("\n---INTERMEDIA---(ARBOL RECORRIDO EN POSTORDEN)\n");
+                                                            postOrden(&programaPtr,intermedia);
+                                                            tree_print_dot(&programaPtr,graph);
+                                                            generaAssembler(&programaPtr);
+                                                           }
 
           | escrituraSinVar 
 
@@ -83,7 +89,7 @@ programa: sentencia 	                  {
 
                                           
 
-sentencia: asignacion PYC		{sentenciaPtr = asigPtr; 
+sentencia: asignacion PYC		{ sentenciaPtr = asigPtr;
                                           printf("\nREGLA 3: <sentencia>--><asignacion> PYC\n");}
           | ciclo                   {sentenciaPtr = cicloPtr;printf("\nREGLA 4: <sentencia>--><ciclo>\n");}
           | decisiones              {sentenciaPtr = decisionesPtr;printf("\nREGLA 5: <sentencia>--><decisiones>\n");}
@@ -251,7 +257,7 @@ var: expresion           {
 
 asignacion: ID OP_ASIG {strcpy(str_aux2,$<str_val>1);} expresion	    
                                                         {     
-                                                          posEnTabla=chequearVarEnTabla($<str_val>1,yylineno); //hay que ver si es una cte
+                                                          posEnTabla=chequearVarEnTabla($<str_val>1,yylineno); 
                                                           sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
                                                           asigPtr = crearNodo("OP_ASIG",crearHoja(str_aux2,tablaSimb[posEnTabla].tipoDeDato),exprPtr) ;
                                                           verificarTipoDato(&asigPtr,yylineno);
@@ -324,21 +330,24 @@ factor : CONST_ENT                                       {
                                                           printf("\nREGLA 56: <factor>-->ID\n");
                                                          }
             | CONST_REAL                                 {
-                                                          sprintf(str_aux, "_%f",yylval.val);
+                                                          //sprintf(str_aux, "_%.5f",yylval.val);
+                                                          sprintf(str_aux,"_%s",cteFlo);
                                                           factorPtr = crearHoja(str_aux,CteFloat) ;
                                                           ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
                                                           printf("\nREGLA 57: <factor>-->CONST_REAL\n");}
-		| PAR_A   expresion  PAR_C                   {
+		| PAR_A   expresion  PAR_C                   {        
                                                           sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
                                                           ponerEnPila(&pilaFactor,&exprPtr,sizeof(exprPtr));             
                                                           printf("\nREGLA 58: <factor>-->PAR_A <expresion> PAR_C\n");}
             | PAR_A  expresion MOD expresion PAR_C       { 
+                                                           auxOp++;
                                                           sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
                                                           sacarDePila(&pilaExpresion,&auxExprePtr,sizeof(exprPtr));
                                                           factorPtr=crearNodo("MOD",auxExprePtr,exprPtr);
                                                           ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
                                                           printf("\nREGLA 59: <factor>-->PAR_A <expresion> MOD <expresion> PAR_C\n");}
             | PAR_A  expresion DIV expresion PAR_C       {
+                                                            auxOp++;
                                                           sacarDePila(&pilaExpresion,&exprPtr,sizeof(exprPtr));
                                                           sacarDePila(&pilaExpresion,&auxExprePtr,sizeof(exprPtr));
                                                           factorPtr=crearNodo("DIV",auxExprePtr,exprPtr);

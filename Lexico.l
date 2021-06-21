@@ -9,6 +9,7 @@
 
 FILE  *yyin;
 char *yyltext;
+char auxValor[50];
 int yyerror();
 int yyparse();
 int yylex();
@@ -89,7 +90,7 @@ COMA		[,]
 {ELSE}		    {return ELSE;}
 {CONST_ENT}   {yylval.intval = atoi(yytext) ;verifRangoCTE_ENT(yytext,yylineno);colocarEnTablaSimb(yytext,1,yylineno,CteInt); 
                                                                                     return CONST_ENT;}
-{CONST_REAL}  {yylval.val = atof(yytext); verifRangoCTE_REAL(yytext,yylineno);colocarEnTablaSimb(yytext,1,yylineno,CteFloat);
+{CONST_REAL}  { strcpy(cteFlo,yytext);  yylval.val = atof(yytext); printf("%s",yytext); verifRangoCTE_REAL(yytext,yylineno);colocarEnTablaSimb(yytext,1,yylineno,CteFloat);
                                                                             return CONST_REAL;}
 
 {PAR_A}		{return PAR_A;}
@@ -103,8 +104,8 @@ COMA		[,]
 {COR_A}   {return COR_A;}
 {COR_C}   {return COR_C;}
 {COMA}			  {return COMA;}
-{CTE_STRING}	{yylval.str_val = strdup(yytext); verifRangoString(yytext,yylineno);colocarEnTablaSimb(yytext,1,yylineno,CteString);
-                                                                                return CTE_STRING;}
+{CTE_STRING}	{strcpy(auxValor,yytext);replace(yytext,'_',' '); yylval.str_val = strdup(yytext);verifRangoString(yytext,yylineno);colocarEnTablaSimb(yytext,1,yylineno,CteString);
+                                                                                cambiarValor(auxValor);return CTE_STRING;}
 
 
 {OP_ASIG}		{return OP_ASIG;}
