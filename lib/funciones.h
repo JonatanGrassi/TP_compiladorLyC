@@ -62,6 +62,7 @@ tSimbo tablaSimb[TAMANIO_TABLA];
 int cuentaRegs;
 int _cantIds;
 int auxOp;
+int cantidadInlist;
 char cteFlo[50];
 
 int verifRangoString(char*ptr,int linea);
@@ -98,6 +99,8 @@ void recorrerIntermedia(tArbol *arbol,FILE * pf);
 void tratarNodo(tArbol *nodo,FILE *pf);
 void replace(char *orig, char rep, char busc);
 void cambiarValor(char*auxValor);
+void cargarOperadores(FILE*pf);
+void traducirCondiciones(char *jump, char *jumpNegado,FILE*pf);
 
 
 /*Punteros para arbol*/
@@ -126,7 +129,9 @@ tArbol 	asigPtr,			//Puntero de asignaciones
 		auxInlist2,
 		inlistPtr,
 		inlistExprePtr,
-		inlistBuscarPtr;
+		inlistBuscarPtr,
+		cuerpoElse,
+		cuerpo;
 
 //PILA
 typedef struct sNodoP
@@ -145,6 +150,8 @@ tPila pilaPrograma;
 tPila pilaCondicion;
 tPila pilaProgramaFalso;
 tPila pilaAssembler;
+tPila pilaEtiquetas;
+tPila pilaEtiquetasWhile;
 
 void crearPila(tPila *p);
 int  pilaLlena(const tPila *p, unsigned cantBytes);

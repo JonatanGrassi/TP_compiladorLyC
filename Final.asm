@@ -31,11 +31,22 @@ d                             dd                  ?
 z                             dd                  ?                   
 var3                          dd                  ?                   
 var9                          dd                  ?                   
-_ingrese_b__                  db                  "ingrese b: "       ,'$',11 dup(?)
-_4                            dd                  4                   
+_ingrese_var4__               db                  "ingrese var4: "    ,'$',14 dup(?)
+_ingrese_var6__               db                  "ingrese var6: "    ,'$',14 dup(?)
+_10                           dd                  10                  
 _5                            dd                  5                   
 _3                            dd                  3                   
-_15                           dd                  15                  
+_0                            dd                  0                   
+__repe1                       dd                  ?                   
+__buscar1                     dd                  ?                   
+_1                            dd                  1                   
+_2                            dd                  2                   
+_7                            dd                  7                   
+_12                           dd                  12                  
+_34                           dd                  34                  
+_48                           dd                  48                  
+_encontro                     db                  "encontro"          ,'$',8 dup(?)
+_no_encontro                  db                  "no encontro"       ,'$',11 dup(?)
 
 .CODE
 .startup
@@ -44,30 +55,97 @@ _15                           dd                  15
 FINIT
 
 
-displayString 	_ingrese_b__
-getInteger 	b
-fild 	_4
-fchs 
+displayString 	_ingrese_var4__
+getInteger 	var4
+displayString 	_ingrese_var6__
+getInteger 	var6
+fild 	_10
+fistp 	b
+fild 	_5
+fistp 	d
+fild 	_3
+fistp 	a
+fild 	var4
+fistp 	__buscar1
+fild 	_0
+fistp 	__repe1
+fild 	_2
+fimul 	b
 fistp 	_auxE0
 fild 	_auxE0
-fimul 	_5
+fiadd 	_7
 fistp 	_auxE1
+fild 	__buscar1
 fild 	_auxE1
-fiadd 	_3
+fxch
+fcom
+fstsw	ax
+sahf
+jne	etiq1
+bloqueTrue1:
+fild 	_1
+fistp 	__repe1
+etiq1:
+fild 	__buscar1
+fild 	_12
+fxch
+fcom
+fstsw	ax
+sahf
+jne	etiq2
+bloqueTrue2:
+fild 	_1
+fistp 	__repe1
+etiq2:
+fild 	_34
+fiadd 	d
 fistp 	_auxE2
 fild 	_auxE2
-fisub 	b
+fimul 	a
 fistp 	_auxE3
-fild 	_4
-fild 	_15
-fprem 
-fistp 	_auxE4
 fild 	_auxE3
-fiadd 	_auxE4
+fiadd 	b
+fistp 	_auxE4
+fild 	__buscar1
+fild 	_auxE4
+fxch
+fcom
+fstsw	ax
+sahf
+jne	etiq3
+bloqueTrue3:
+fild 	_1
+fistp 	__repe1
+etiq3:
+fild 	__buscar1
+fild 	_48
+fxch
+fcom
+fstsw	ax
+sahf
+jne	etiq4
+bloqueTrue4:
+fild 	_1
+fistp 	__repe1
+etiq4:
+fild 	__repe1
+fild 	_1
+fxch
+fcom
+fstsw	ax
+sahf
+jne	etiq5
+bloqueTrue5:
+fild 	c
+fiadd 	_2
 fistp 	_auxE5
 fild 	_auxE5
-fistp 	var6
-displayInteger 	var6,3
+fistp 	c
+displayString 	_encontro
+jmp	 finIf1
+etiq5:
+displayString 	_no_encontro
+finIf1:
 
 mov ax, 4c00h
 int 21h

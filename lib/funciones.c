@@ -3,13 +3,28 @@
 #include <conio.h>
 #include "funciones.h"
 
+char auxAssembE[50];
 char msg[100];
 char aux_str[50];
-char auxAssembE[50];
+
 char cteFloat[50];
 char auxAssembR[50];
 int auxEntero = 0;
+int esCondMultOR = 0;
+int esCondMultAND = 0;
+int esCondWhile = 0;
+int etiqFalseIf = 0;
+int etiqFinIf = 0;
+int etiqTrueIf = 0;
+int contEtiqWhile = 0;
 int auxReal = 0;
+int fueConDMult = 0;
+int totalInlist= 0;
+
+char etiqTrue[50];
+char etiqFalse[50];
+char etiqWhile[50];
+char aux_str2[50];
 
 void colocarEnTablaSimb(char *ptr, int esCte, int linea, int tDatoCte)
 {
@@ -89,7 +104,10 @@ void generaIntermediaIfConElse()
 {
 	sacarDePila(&pilaCondicion, &condicionPtr, sizeof(condicionPtr));
 	sacarDePila(&pilaPrograma, &auxBloquePtr, sizeof(programaPtr));
-	cuerpoIfPtr = crearNodo("CUERPOIF", auxBloquePtr, programaPtr);
+	cuerpoElse = crearHoja("TRUE", SinTipo);
+	cuerpo = crearNodo("CUERPO", auxBloquePtr, cuerpoElse);
+	cuerpoIfPtr = crearNodo("CUERPOIF", cuerpo, programaPtr);
+	//cuerpoIfPtr = crearNodo("CUERPOIF", auxBloquePtr, programaPtr);
 	decisionesPtr = crearNodo("IF", condicionPtr, cuerpoIfPtr);
 	if (!sacarDePila(&pilaPrograma, &programaPtr, sizeof(programaPtr)))
 		programaPtr = NULL;
@@ -97,7 +115,10 @@ void generaIntermediaIfConElse()
 void generaIntermediaWhile()
 {
 	sacarDePila(&pilaCondicion, &condicionPtr, sizeof(condicionPtr));
-	cicloPtr = crearNodo("WHILE", condicionPtr, programaPtr);
+	cuerpo = crearHoja("#Etiq",SinTipo);
+	cuerpo = crearNodo("CUERPO",cuerpo,condicionPtr);
+	cicloPtr = crearNodo("WHILE", cuerpo, programaPtr);
+	//cicloPtr = crearNodo("WHILE", condicionPtr, programaPtr);
 	if (!sacarDePila(&pilaPrograma, &programaPtr, sizeof(programaPtr)))
 		programaPtr = NULL;
 }
@@ -428,6 +449,7 @@ int verificarCompatible(int tipo, int tipoAux)
 void generaAssembler(tArbol *intemedia)
 {
 	int i;
+	totalInlist= cantidadInlist;
 	FILE *pf = fopen("Final.asm", "w+");
 	if (!pf)
 	{
@@ -435,6 +457,8 @@ void generaAssembler(tArbol *intemedia)
 		exit(1);
 	}
 	crearPila(&pilaAssembler);
+	crearPila(&pilaEtiquetas);
+	crearPila(&pilaEtiquetasWhile);
 	//includes
 	fprintf(pf, "include macros2.asm\n");
 	fprintf(pf, "include number.asm\n\n");
@@ -503,6 +527,8 @@ void generaAssembler(tArbol *intemedia)
 	fprintf(pf, "\nEND");
 
 	vaciarPila(&pilaAssembler);
+	vaciarPila(&pilaEtiquetasWhile);
+	vaciarPila(&pilaEtiquetas);
 
 	fclose(pf);
 }
@@ -529,6 +555,7 @@ void tratarNodo(tArbol *nodo, FILE *pf)
 	pos = buscarEnTabla(auxDatoAr);
 	if (pos != -1)
 	{	
+		//printf("\n%s",(*nodo)->info.dato);
 		ponerEnPila(&pilaAssembler, &(*nodo)->info, sizeof(tInfo));
 	}
 	else
@@ -632,7 +659,7 @@ void tratarNodo(tArbol *nodo, FILE *pf)
 			if (!(*nodo)->izq || !(*nodo)->der)
 			{
 				sacarDePila(&pilaAssembler, &infoHojaDer, sizeof(tInfo));
-				printf("%s",infoHojaDer.dato);
+				printf("%s", infoHojaDer.dato);
 				switch (infoHojaDer.tipoDato)
 				{
 				case CteFloat:
@@ -725,7 +752,7 @@ void tratarNodo(tArbol *nodo, FILE *pf)
 		}
 
 		if (!strcmp(auxDatoAr, "MOD"))
-		{	
+		{
 			sacarDePila(&pilaAssembler, &infoHojaDer, sizeof(tInfo));
 			switch (infoHojaDer.tipoDato)
 			{
@@ -777,6 +804,29 @@ void tratarNodo(tArbol *nodo, FILE *pf)
 				break;
 			}
 		}
+		if (!strcmp(auxDatoAr, "TRUE"))
+		{
+			sacarDePila(&pilaEtiquetas, &etiqFalse, sizeof(etiqFalse));
+			sprintf(etiqTrue, "%s%d", "finIf", ++etiqFinIf);
+			ponerEnPila(&pilaEtiquetas, &etiqTrue, sizeof(etiqTrue));
+			fprintf(pf, "jmp\t %s\n", etiqTrue);
+			fprintf(pf, "%s:\n", etiqFalse);
+		}
+
+		if (!strcmp(auxDatoAr, "IF"))
+		{
+			if (!strcmp((*nodo)->der->info.dato, "CUERPOIF"))
+			{
+				sacarDePila(&pilaEtiquetas, &etiqTrue, sizeof(etiqTrue));
+				fprintf(pf, "%s:\n", etiqTrue);
+			}
+			else
+			{
+				sacarDePila(&pilaEtiquetas, &etiqTrue, sizeof(etiqTrue));
+				//fprintf(pf, "jmp \t%s\n", etiqTrue);
+				fprintf(pf, "%s:\n", etiqTrue);
+			}
+		}
 
 		if (!strcmp(auxDatoAr, "READ"))
 		{
@@ -793,6 +843,151 @@ void tratarNodo(tArbol *nodo, FILE *pf)
 				fprintf(pf, "getString \t%s\n", infoHojaDer.dato);
 				break;
 			}
+		}
+
+		if(!strcmp(auxDatoAr, "#Etiq"))
+		{	
+			esCondWhile = 1;
+			contEtiqWhile++;
+			sprintf(etiqWhile,"%s%d","etiqWhile",contEtiqWhile);
+			ponerEnPila(&pilaEtiquetasWhile,&etiqWhile,sizeof(etiqWhile));
+			fprintf(pf,"%s:\n",etiqWhile);
+		}
+
+		if(!strcmp(auxDatoAr, "WHILE"))
+		{
+			sacarDePila(&pilaEtiquetasWhile,&etiqWhile,sizeof(etiqWhile));
+			fprintf(pf,"jmp \t %s\n",etiqWhile);
+			sacarDePila(&pilaEtiquetas,&etiqWhile,sizeof(etiqWhile));
+			fprintf(pf,"%s:\n",etiqWhile);
+		}
+
+		if (!strcmp(auxDatoAr, "CONDMOR"))
+			esCondMultOR = 1;
+
+		if (!strcmp(auxDatoAr, "CONDMAND"))
+			esCondMultAND = 1;
+
+		if (!strcmp(auxDatoAr, "BLE"))
+		{
+			cargarOperadores(pf);
+			fprintf(pf, "fxch\nfcom\nfstsw\tax\nsahf\n");
+			traducirCondiciones("jbe","ja",pf);
+		}
+
+		if (!strcmp(auxDatoAr, "BGT"))
+		{
+			cargarOperadores(pf);
+			fprintf(pf, "fxch\nfcom\nfstsw\tax\nsahf\n");
+			traducirCondiciones("ja","jbe",pf);
+		}
+
+		if (!strcmp(auxDatoAr, "BLT"))
+		{
+			cargarOperadores(pf);
+			fprintf(pf, "fxch\nfcom\nfstsw\tax\nsahf\n");
+			traducirCondiciones("jb","jae",pf);
+		}
+		///PARA EVITAR UN PROBLEMA EN LAS CONDICIONES LOGICAS MULTIPLES
+		//if (!strcmp(auxDatoAr, ".BUSCAR"))
+		//	fueConDMult=0;
+
+		if (!strcmp(auxDatoAr, "BGE"))
+		{	
+			cargarOperadores(pf);
+			fprintf(pf, "fxch\nfcom\nfstsw\tax\nsahf\n");
+			traducirCondiciones("jae","jb",pf);
+		}
+
+		if (!strcmp(auxDatoAr, "BNE"))
+		{	
+			///PARA EL INLIST
+			if(!strcmp("BUSCAR",(*nodo)->izq->info.dato))
+			{
+				sprintf(aux_str,"%s%d","__repe",totalInlist-(cantidadInlist-1));
+				sacarDePila(&pilaAssembler,&aux_str2,sizeof(aux_str2));
+				ponerEnPila(&pilaAssembler,&aux_str,sizeof(aux_str));    //intercamio op
+				ponerEnPila(&pilaAssembler,&aux_str2,sizeof(aux_str2));
+				cantidadInlist--;
+				printf("\nOpder:%s",aux_str);
+				printf("\nOpIzq:%s",aux_str2);
+			}
+			cargarOperadores(pf);
+			fprintf(pf, "fxch\nfcom\nfstsw\tax\nsahf\n");
+			traducirCondiciones("jne","je",pf);
+		}
+
+		if (!strcmp(auxDatoAr, "BEQ"))
+		{	
+			///PARA EL INLIST
+			if(!strcmp("BUSCAR",(*nodo)->izq->info.dato))
+			{
+				sprintf(aux_str,"%s%d","__repe",totalInlist-(cantidadInlist-1));
+				sacarDePila(&pilaAssembler,&aux_str2,sizeof(aux_str2));
+				ponerEnPila(&pilaAssembler,&aux_str,sizeof(aux_str));    //intercamio op
+				ponerEnPila(&pilaAssembler,&aux_str2,sizeof(aux_str2));
+				cantidadInlist--;
+			}
+			cargarOperadores(pf);
+			fprintf(pf, "fxch\nfcom\nfstsw\tax\nsahf\n");
+			traducirCondiciones("je","jne",pf);
+		}
+	}
+}
+
+void cargarOperadores(FILE *pf)
+{
+	tInfo infoHojaDer;
+	tInfo infoHojaIzq;
+	sacarDePila(&pilaAssembler, &infoHojaDer, sizeof(tInfo));
+	switch (infoHojaDer.tipoDato)
+	{
+	case Integer:
+	case CteInt:
+		sacarDePila(&pilaAssembler, &infoHojaIzq, sizeof(tInfo));
+		fprintf(pf, "fild \t%s\n", infoHojaIzq.dato);
+		fprintf(pf, "fild \t%s\n", infoHojaDer.dato);
+		break;
+	case Float:
+	case CteFloat:
+		fprintf(pf, "fld \t%s\n", infoHojaIzq.dato);
+		fprintf(pf, "fld \t%s\n", infoHojaDer.dato);
+		break;
+	}
+}
+
+void traducirCondiciones(char *jump, char *jumpNegado,FILE*pf)
+{	
+	if (esCondMultAND)
+	{
+		fprintf(pf, "%s\t",jump);
+		etiqTrueIf++;
+		esCondMultAND = 0;
+		fueConDMult = 1;
+		sprintf(etiqTrue, "%s%d", "etiq", etiqTrueIf);
+		fprintf(pf, "%s\n", etiqTrue);
+	}
+	else
+	{
+		if (esCondMultOR)
+		{
+			etiqTrueIf++;
+			fueConDMult = 1;
+			fprintf(pf, "%s\t",jumpNegado);
+			fprintf(pf, "%s%d\n", "bloqueTrue", etiqTrueIf);
+			esCondMultOR = 0;
+		}
+		else
+		{
+			fprintf(pf, "%s\t",jump);
+			if (!fueConDMult)
+				etiqTrueIf++;
+			else
+				fueConDMult = 0;
+			sprintf(etiqTrue, "%s%d", "etiq", etiqTrueIf);
+			ponerEnPila(&pilaEtiquetas, &etiqTrue, sizeof(etiqTrue));
+			fprintf(pf, "%s\n", etiqTrue);
+			fprintf(pf, "%s%d:\n", "bloqueTrue", etiqTrueIf);
 		}
 	}
 }

@@ -19,7 +19,6 @@ int tipoDatoID;
 char conector[10];
 char compara[10];
 int cuerpoCont=0;
-int cantidadInlist=0;
 int auxDato;
 int posEnTabla;
 int isNegado=0;
@@ -48,7 +47,7 @@ char *str_val;
 %right MENOS_UNARIO
 %left OP_RESTA OP_SUMA
 %%
-iniciopro: DECVAR declaracion ENDDEC {auxOp=0;} programa   {
+iniciopro: DECVAR declaracion ENDDEC {auxOp=0;cantidadInlist=0;} programa   {
                                                             grabarTabla();
                                                             printf("\n---INTERMEDIA---(ARBOL RECORRIDO EN POSTORDEN)\n");
                                                             postOrden(&programaPtr,intermedia);
@@ -161,7 +160,15 @@ subrutIf3: /* vacio */ {
                        }
 subrutIf2:/* vacio */ {isNegado=1;}
 
-subrutIf4:/* vacio */ {condicionPtr = crearNodo(conector,condicionPtrIzq,condicionPtr);}
+subrutIf4:/* vacio */ { 
+                        if(!strcmp(conector,"OR"))
+                            cuerpo = crearHoja("CONDMOR",SinTipo);
+                        else
+                            cuerpo = crearHoja("CONDMAND",SinTipo);
+                        cuerpo = crearNodo("CUERPO",cuerpo,condicionPtrIzq);
+                        condicionPtr = crearNodo(conector,cuerpo,condicionPtr);
+                        //condicionPtr = crearNodo(conector,condicionPtrIzq,condicionPtr);
+                      }
 
 conectLog: AND  {condicionPtrIzq = condicionPtr; strcpy(conector,"AND"); printf("\nREGLA 25: <conectLog>-->AND\n");} 
            |OR  {condicionPtrIzq = condicionPtr; strcpy(conector,"OR"); printf("\nREGLA 26: <conectLog>-->OR\n");}
@@ -223,28 +230,30 @@ funcionlist: INLIST PAR_A ID {posEnTabla=chequearVarEnTabla($<str_val>3,yylineno
                                                                                     
                                                                                     sprintf(inlistAux, "__repe%d",++cantidadInlist);
                                                                                     sprintf(inlistAux2, "__buscar%d",cantidadInlist);
-                                                                                    colocarEnTablaSimb("-1",1, yylineno,CteInt);
-                                                                                    auxInlist1=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("-1",CteInt));
+                                                                                    colocarEnTablaSimb("0",1, yylineno,CteInt);
+                                                                                    auxInlist1=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("_0",CteInt));
                                                                                     int tipoDatoID = tablaSimb[posEnTabla].tipoDeDato;
                                                                                     auxInlist2=crearNodo("OP_ASIG",crearHoja(inlistAux2,tipoDatoID),crearHoja($<str_val>3,tipoDatoID));
                                                                                     colocarEnTablaSimb(inlistAux,0,yylineno,0);
                                                                                     tablaSimb[cuentaRegs-1].tipoDeDato = Integer;
                                                                                     colocarEnTablaSimb(inlistAux2,0,yylineno,0);
                                                                                     tablaSimb[cuentaRegs-1].tipoDeDato = tipoDatoID;
-                                                                                    inlistPtr=crearNodo("BUSCAR",auxInlist2,auxInlist1);} 
+                                                                                    inlistPtr=crearNodo(".BUSCAR",auxInlist2,auxInlist1);
+                                                                                    colocarEnTablaSimb("1",1, yylineno,CteInt);
+                                                                                    } 
                                           
                                                                                                 list COR_C PAR_C {
-                                                                                                                  inlistBuscarPtr=crearNodo("BNE",inlistBuscarPtr,crearHoja("1",CteInt));
+                                                                                                                  inlistBuscarPtr=crearNodo("BNE",inlistBuscarPtr,crearHoja("_1",CteInt));
                                                                                                                   printf("\nREGLA 44: <funcionlist>-->INLIST PAR_A ID PYC COR_A <list> COR_C PAR_C\n");
                                                                                                                  }
 list: list PYC var      {
                            auxInlist1=crearNodo("BNE",crearHoja(inlistAux2,tipoDatoID),inlistExprePtr);
-                           auxInlist2=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("1",CteInt));
+                           auxInlist2=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("_1",CteInt));
                            auxInlist1=crearNodo("IF",auxInlist1,auxInlist2);
                            inlistBuscarPtr=crearNodo("BUSCAR",inlistBuscarPtr,auxInlist1);
                         }
       | var             {  auxInlist1=crearNodo("BNE",crearHoja(inlistAux2,tipoDatoID),inlistExprePtr);
-                           auxInlist2=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("1",CteInt));
+                           auxInlist2=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("_1",CteInt));
                            auxInlist1=crearNodo("IF",auxInlist1,auxInlist2);
                            inlistBuscarPtr=crearNodo("BUSCAR",inlistPtr,auxInlist1);
                            printf("\nREGLA 48: <list>--><var>\n");
