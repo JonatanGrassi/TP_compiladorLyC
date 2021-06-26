@@ -100,7 +100,7 @@ void tratarNodo(tArbol *nodo,FILE *pf);
 void replace(char *orig, char rep, char busc);
 void cambiarValor(char*auxValor);
 void cargarOperadores(FILE*pf);
-void traducirCondiciones(char *jump, char *jumpNegado,FILE*pf);
+void traducirCondiciones(char *jump, char *jumpNegado,FILE*pf,char*etiqueta,int*ifInlist,char*bloqueTrueInl);
 
 
 /*Punteros para arbol*/

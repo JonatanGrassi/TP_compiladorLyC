@@ -4,24 +4,11 @@ a;b;c;e;f;d;z : integer
 var3 ;var9 : float  
 ENDDEC
 
-write "ingrese var4: ";
-read var4;
-write "ingrese var6: ";
-read var6;
-b:10;
-d:5;
-a:3;
+b: 5;
 
-if(inlist(var4;[2*b+7 ; 12 ; (34+d)*a+b ; 48]))
-{
-    c : c + 2;
-    write "encontro";
-}
-else
-{
-    write "no encontro";  
-}   
+var4: 4/2;
 
+write var4;
 
 
 
