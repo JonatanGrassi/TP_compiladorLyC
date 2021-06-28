@@ -1,44 +1,61 @@
 DECVAR
 var3 ;var9 : float
--/var3 : integer     -/ERROR DE VARIABLE YA DECLARADA/-   /-
 var4;var6;var7 : integer
 a;b;c;e;f;d;z : integer
 ENDDEC
 
 -/OPERACIONES ARITMETICAS/-
+write "Ingrese Variable b:";
+read b;
+a:10;
+z: a+3*2-8/(2+2)+b;
+write z;
 
-z: a+b*c-d/(e+f)+20;
-a: (-4) + 18;
+f : (8 DIV 2) * 4;
+write f;
 
--/ERROR DE TIPO/-
--/var3 : var9 + 4;/-
+d : (5 MOD 2) * 4;
+write d;
 
--/ERROR DE VARIABLE NO DECLARA/-
--/varNoDec : var9 + 4;/-
+var9 : 0.99 + 2.58 * 49.;
+write var9;
 
--/DESICIONES,CICLOS,TEMAS ESPECIALES,ANIDAMIENTOS/-
+write "fin operaciones";
 
-if(var7 == var6 OR var4 >= var6)
+if(a == 8 OR b > 5)
 {   
-    read var6;
-    while(var3!=var9 AND var4==var6)
+    write "Ciclo while";
+    while(a > 0 AND b > 0)
     {
-        var9 : var3 + 2.48;
-        write "Ingrese var6:";
+        a : a - 2;
+        b : b - 2;
+        write a;
     }
+    write "fin Ciclo while";
 }
 else
 {   
-    read var9;
+    write "Inlist";
+    write "Ingrese Variable Var4:";
+    read var4;
     if(inlist(var4;[2*b+7 ; 12 ; (34+d)*a+b ; 48]))
     {
-       var4 : z + 56;
-       d : 48 + (a*b MOD b+3);
-       f : 72 + (a*b DIV b+3);
+        write "encontro var4";
+    }
+    else
+    {
+        write "no encontro var4";
     }
 }
-
-if(NOT var6!=var7)
+-/DESICIONES CICLOS TEMAS ESPECIALES ANIDAMIENTOS/-
+write "If negado";
+write "Ingrese Variable e:";
+read e;
+if(NOT e > 5)
 {
-    write var4;
+    write "e es mayor a 5";
+}
+else
+{
+    write "e no es mayor a 5";
 }

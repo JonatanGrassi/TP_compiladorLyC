@@ -82,7 +82,6 @@ void replace(char *orig, char rep, char busc)
 		//remplazo espacios por guiones
 		while (*orig)
 		{
-
 			if (*orig == busc || *orig == ':')
 				*orig = rep;
 			orig++;
@@ -271,12 +270,11 @@ void esVariableNumerica(int posDeTabla, int linea)
 	}
 }
 
-void errorDeCompatibilidadOperadores(tArbol *operaIzq, tArbol *operaDer, int linea)
-{
-	if (!verificarCompatible((*operaDer)->info.tipoDato, (*operaIzq)->info.tipoDato))
+void errorDeCompatibilidadOperadores(int tipoOperaIzq, int tipoOperaDer, int linea,char*descripcion)
+{	
+	if (!verificarCompatible(tipoOperaIzq,tipoOperaDer))
 	{
-		sprintf(msg, "Los operadores %s y %s de la condicion no son compatibles", (*operaIzq)->info.dato, (*operaDer)->info.dato);
-		mensajeDeError(ErrorSintactico, msg, linea);
+		mensajeDeError(ErrorSintactico, descripcion, linea);
 	}
 }
 
@@ -434,10 +432,13 @@ int verificarTipoDato(tArbol *p, int linea)
 	tArbol *pAux = hijoMasIzq(p); //tipo a comparar contra el resto
 	int tipoAux = (*pAux)->info.tipoDato;
 	verificarTipo(p, tipoAux, linea);
+	return tipoAux;
 }
 
+
 int verificarCompatible(int tipo, int tipoAux)
-{
+{	
+	
 	if (tipo == tipoAux)
 		return TRUE;
 	if (tipo == CteInt && tipoAux == Integer || tipoAux == CteInt && tipo == Integer)
@@ -494,8 +495,7 @@ void generaAssembler(tArbol *intemedia)
 			fprintf(pf, "%-20s%-20s", "dd", "?");
 			break;
 		case String:
-			//fprintf(pf, "%-20s%-20s", "dd", "?");
-			fprintf(pf, "%-20s%-20s", "DB MAXTEXTSIZE dup (?)", "'$'");
+			fprintf(pf, "%-20s%-20s","db" ,",'$', MAXTEXTSIZE dup (?)", "'$'");
 			break;
 		case CteFloat:
 			fprintf(pf, "%-20s%-20s", "dd", tablaSimb[i].valor);
@@ -504,12 +504,7 @@ void generaAssembler(tArbol *intemedia)
 			fprintf(pf, "%-20s%-20s", "dd", tablaSimb[i].valor);
 			break;
 		case CteString:
-
-			//fprintf(pf, "%-20s%-20s", "dd", tablaSimb[i].valor);
-			//fprintf(pf,"%-20%-20s","db","MAXTEXTSIZE dup (?)'$'");
-
 			fprintf(pf, "%-20s%-20s%s%d dup(?)", "db", tablaSimb[i].valor, ",'$',", tablaSimb[i].longitud);
-			//fprintf(pf,"\t@%s \tDB \"%s\",'$',%d dup(?)\n",tabla_simbolo[i].nombre,tabla_simbolo[i].valor_s,50-tabla_simbolo[i].longitud);
 			break;
 		}
 		fprintf(pf, "\n");
@@ -527,7 +522,7 @@ void generaAssembler(tArbol *intemedia)
 	//FUNCIONES PARA MANEJO DE ENTRADA/SALIDA Y CADENAS
 	fprintf(pf, "\nstrlen proc\n\tmov bx, 0\n\tstrl01:\n\tcmp BYTE PTR [si+bx],'$'\n\tje strend\n\tinc bx\n\tjmp strl01\n\tstrend:\n\tret\nstrlen endp\n");
 	fprintf(pf, "\ncopiar proc\n\tcall strlen\n\tcmp bx , MAXTEXTSIZE\n\tjle copiarSizeOk\n\tmov bx , MAXTEXTSIZE\n\tcopiarSizeOk:\n\tmov cx , bx\n\tcld\n\trep movsb\n\tmov al , '$'\n\tmov byte ptr[di],al\n\tret\ncopiar endp\n");
-	fprintf(pf, "\nconcat proc\n\tpush ds\n\tpush si\n\tcall strlen\n\tmov dx , bx\n\tmov si , di\n\tpush es\n\tpop ds\n\tcall strlen\n\tadd di, bx\n\tadd bx, dx\n\tcmp bx , MAXTEXTSIZE\n\tjg concatSizeMal\n\tconcatSizeOk:\n\tmov cx , dx\n\tjmp concatSigo\n\tconcatSizeMal:\n\tsub bx , MAXTEXTSIZE\n\tsub dx , bx\n\tmov cx , dx\n\tconcatSigo:\n\tpush ds\n\tpop es\n\tpop si\n\tpop ds\n\tcld\n\trep movsb\n\tmov al , '$'\n\tmov byte ptr[di],al\n\tret\nconcat endp\n");
+	//fprintf(pf, "\nconcat proc\n\tpush ds\n\tpush si\n\tcall strlen\n\tmov dx , bx\n\tmov si , di\n\tpush es\n\tpop ds\n\tcall strlen\n\tadd di, bx\n\tadd bx, dx\n\tcmp bx , MAXTEXTSIZE\n\tjg concatSizeMal\n\tconcatSizeOk:\n\tmov cx , dx\n\tjmp concatSigo\n\tconcatSizeMal:\n\tsub bx , MAXTEXTSIZE\n\tsub dx , bx\n\tmov cx , dx\n\tconcatSigo:\n\tpush ds\n\tpop es\n\tpop si\n\tpop ds\n\tcld\n\trep movsb\n\tmov al , '$'\n\tmov byte ptr[di],al\n\tret\nconcat endp\n");
 
 	fprintf(pf, "\nEND");
 
@@ -588,8 +583,8 @@ void tratarNodo(tArbol *nodo, FILE *pf)
 				sacarDePila(&pilaAssembler, &infoHojaIzq, sizeof(tInfo));
 				fprintf(pf, "mov ax, @DATA\nmov ds, ax\nmov es, ax\n");
 				fprintf(pf, "mov si, OFFSET\t%s\n", infoHojaDer.dato);
-				fprintf(pf, "\tmov di, OFFSET\t%s\n", infoHojaIzq.dato);
-				fprintf(pf, "\tcall copiar\n");
+				fprintf(pf, "mov di, OFFSET\t%s\n", infoHojaIzq.dato);
+				fprintf(pf, "call copiar\n");
 				break;
 			}
 		}
@@ -816,14 +811,17 @@ void tratarNodo(tArbol *nodo, FILE *pf)
 			case Integer:
 			case CteInt:
 				fprintf(pf, "displayInteger \t%s,3\n", infoHojaDer.dato);
+				fprintf(pf,"displayString _NEWLINE\n");
 				break;
 			case Float:
 			case CteFloat:
 				fprintf(pf, "displayFloat \t%s,3\n", infoHojaDer.dato);
+				fprintf(pf,"displayString _NEWLINE\n");
 				break;
 			case String:
 			case CteString:
 				fprintf(pf, "displayString \t%s\n", infoHojaDer.dato);
+				fprintf(pf,"displayString _NEWLINE\n");
 				break;
 			}
 		}

@@ -77,7 +77,8 @@ void agregarTiposDatosCte(int tDato);
 int chequearVarEnTabla(char* nombre,int linea);
 void mensajeDeError(enum tipoError error,const char* info, int linea);
 void esVariableNumerica(int posDeTabla,int linea);
-void errorDeCompatibilidadOperadores(tArbol*operaIzq,tArbol*operaDer,int linea);
+//void errorDeCompatibilidadOperadores(tArbol*operaIzq,tArbol*operaDer,int linea,char*descripcion);
+void errorDeCompatibilidadOperadores(int tipoOperaIzq, int tipoOperaDer, int linea,char*descripcion);
 int verificarTipoDato(tArbol * p,int linea);
 void verificarTipo(tArbol* p,int tipoAux,int linea);
 int verificarCompatible(int tipo,int tipoAux);
@@ -131,7 +132,8 @@ tArbol 	asigPtr,			//Puntero de asignaciones
 		inlistExprePtr,
 		inlistBuscarPtr,
 		cuerpoElse,
-		cuerpo;
+		cuerpo,
+		tDatoInlistVar;
 
 //PILA
 typedef struct sNodoP

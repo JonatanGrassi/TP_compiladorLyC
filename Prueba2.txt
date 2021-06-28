@@ -1,14 +1,12 @@
 DECVAR
-var4;var6;var7 : integer
+var8;var6;var7 : integer
 a;b;c;e;f;d;z : integer
 var3 ;var9 : float  
 ENDDEC
 
-b: 5;
-
-var4: 4/2;
-
-write var4;
-
-
-
+a:6;
+while(a!=0)
+{
+    a:a-2;
+    write a;
+}
