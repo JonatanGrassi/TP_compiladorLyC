@@ -270,9 +270,9 @@ void esVariableNumerica(int posDeTabla, int linea)
 	}
 }
 
-void errorDeCompatibilidadOperadores(int tipoOperaIzq, int tipoOperaDer, int linea,char*descripcion)
-{	
-	if (!verificarCompatible(tipoOperaIzq,tipoOperaDer))
+void errorDeCompatibilidadOperadores(int tipoOperaIzq, int tipoOperaDer, int linea, char *descripcion)
+{
+	if (!verificarCompatible(tipoOperaIzq, tipoOperaDer))
 	{
 		mensajeDeError(ErrorSintactico, descripcion, linea);
 	}
@@ -408,11 +408,12 @@ void verificarTipo(tArbol *p, int tipoAux, int linea)
 		{
 			tipo = (*p)->info.tipoDato;
 			compatible = verificarCompatible(tipo, tipoAux);
+			//printf("\nnodo:%sTIPOS---tipo:%d  tipoAux:%d", (*p)->info.dato, tipo, tipoAux);
 			printf("   ");
-		}
-		if (!compatible)
-		{
-			mensajeDeError(ErrorSintactico, "tipos no compatibles", linea);
+			if (!compatible)   //MODIF PUSE ADENTRO DE ESTE IF
+			{
+				mensajeDeError(ErrorSintactico, "tipos no compatibles", linea);
+			}
 		}
 	}
 }
@@ -435,10 +436,9 @@ int verificarTipoDato(tArbol *p, int linea)
 	return tipoAux;
 }
 
-
 int verificarCompatible(int tipo, int tipoAux)
-{	
-	
+{
+
 	if (tipo == tipoAux)
 		return TRUE;
 	if (tipo == CteInt && tipoAux == Integer || tipoAux == CteInt && tipo == Integer)
@@ -495,7 +495,7 @@ void generaAssembler(tArbol *intemedia)
 			fprintf(pf, "%-20s%-20s", "dd", "?");
 			break;
 		case String:
-			fprintf(pf, "%-20s%-20s","db" ,",'$', MAXTEXTSIZE dup (?)", "'$'");
+			fprintf(pf, "%-20s%-20s", "db", ",'$', MAXTEXTSIZE dup (?)", "'$'");
 			break;
 		case CteFloat:
 			fprintf(pf, "%-20s%-20s", "dd", tablaSimb[i].valor);
@@ -509,7 +509,7 @@ void generaAssembler(tArbol *intemedia)
 		}
 		fprintf(pf, "\n");
 	}
-	fprintf(pf, "%-30s%-20s%-20s\n","_NEWLINE","db", "0DH,0AH,'$'");
+	fprintf(pf, "%-30s%-20s%-20s\n", "_NEWLINE", "db", "0DH,0AH,'$'");
 	fprintf(pf, "\n.CODE\n.startup\n\tmov AX,@DATA\n\tmov DS,AX\nFINIT\n\n");
 
 	fprintf(pf, "\n");
@@ -732,8 +732,8 @@ void tratarNodo(tArbol *nodo, FILE *pf)
 					printf("ERROR Sintactico. Descripcion: stack overflow division por cero.\n");
 					exit;
 				}
-				fprintf(pf, "fld \t%s\n",infoHojaDer.dato );
-				fprintf(pf, "fdivr \t%s\n",infoHojaIzq.dato );
+				fprintf(pf, "fld \t%s\n", infoHojaDer.dato);
+				fprintf(pf, "fdivr \t%s\n", infoHojaIzq.dato);
 				sprintf(auxAssembR, "%s%d", "_auxR", auxReal);
 				fprintf(pf, "fstp \t%s\n", auxAssembR);
 				strcpy(infoHojaIzq.dato, auxAssembR); /// uso el infoHojaizq para no definir otro auxiliar
@@ -749,8 +749,8 @@ void tratarNodo(tArbol *nodo, FILE *pf)
 					printf("\nERROR Sintactico. Descripcion: stack overflow division por cero.\n");
 					exit;
 				}
-				fprintf(pf, "fild \t%s\n",infoHojaDer.dato );
-				fprintf(pf, "fidivr \t%s\n",infoHojaIzq.dato );
+				fprintf(pf, "fild \t%s\n", infoHojaDer.dato);
+				fprintf(pf, "fidivr \t%s\n", infoHojaIzq.dato);
 				sprintf(auxAssembE, "%s%d", "_auxE", auxEntero);
 				fprintf(pf, "fistp \t%s\n", auxAssembE);
 				strcpy(infoHojaIzq.dato, auxAssembE);
@@ -811,17 +811,17 @@ void tratarNodo(tArbol *nodo, FILE *pf)
 			case Integer:
 			case CteInt:
 				fprintf(pf, "displayInteger \t%s,3\n", infoHojaDer.dato);
-				fprintf(pf,"displayString _NEWLINE\n");
+				fprintf(pf, "displayString _NEWLINE\n");
 				break;
 			case Float:
 			case CteFloat:
 				fprintf(pf, "displayFloat \t%s,3\n", infoHojaDer.dato);
-				fprintf(pf,"displayString _NEWLINE\n");
+				fprintf(pf, "displayString _NEWLINE\n");
 				break;
 			case String:
 			case CteString:
 				fprintf(pf, "displayString \t%s\n", infoHojaDer.dato);
-				fprintf(pf,"displayString _NEWLINE\n");
+				fprintf(pf, "displayString _NEWLINE\n");
 				break;
 			}
 		}

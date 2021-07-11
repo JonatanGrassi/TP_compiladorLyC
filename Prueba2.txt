@@ -1,12 +1,11 @@
 DECVAR
-var8;var6;var7 : integer
-a;b;c;e;f;d;z : integer
+var8;var6;var7: integer
+a;b;c;e;f;d;k;t;x;l;m;z : integer
 var3 ;var9 : float  
 ENDDEC
 
-a:6;
-while(a!=0)
+
+if(inlist(a;[2*b+7 ; 12 ; (34+d)*a+b ; 48]))
 {
-    a:a-2;
-    write a;
+    write "hola";
 }

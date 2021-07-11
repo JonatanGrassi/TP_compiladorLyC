@@ -65,6 +65,7 @@ iniciopro: DECVAR declaracion ENDDEC {auxOp=0;cantidadInlist=0;} programa   {
 programa: sentencia 	                  {
                                           if(programaPtr!=NULL)
                                           {    
+                                            printf("paso1");
                                               sprintf(str_aux, "CUERPO%d",cuerpoCont++);
 							                            programaPtr = crearNodo(str_aux, sentenciaPtr, NULL);
                                              
@@ -83,7 +84,7 @@ programa: sentencia 	                  {
 							                            } 
                                           else 
                                           {    
-                                             
+                                             printf("paso2");
                                             sprintf(str_aux, "CUERPO%d",cuerpoCont++);
 							                                   programaPtr = crearNodo(str_aux, sentenciaPtr,NULL);
 			                                    }
@@ -236,7 +237,7 @@ funcionlist: INLIST PAR_A ID {posEnTabla=chequearVarEnTabla($<str_val>3,yylineno
                                                                                     sprintf(inlistAux, "__repe%d",++cantidadInlist);
                                                                                     sprintf(inlistAux2, "__buscar%d",cantidadInlist);
                                                                                     colocarEnTablaSimb("0",1, yylineno,CteInt);
-                                                                                    auxInlist1=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("_0",CteInt));
+                                                                                    auxInlist1=crearNodo("OP_ASIG",crearHoja(inlistAux,Integer),crearHoja("_1",CteInt));
                                                                                     tipoDatoID = tablaSimb[posEnTabla].tipoDeDato;
                                                                                     tDatoInlistVar=crearHoja($<str_val>3,tipoDatoID);
                                                                                     auxInlist2=crearNodo("OP_ASIG",crearHoja(inlistAux2,tipoDatoID),tDatoInlistVar);
@@ -347,6 +348,7 @@ factor : CONST_ENT                                       {
                                                          }
 		| ID                                         {         
                                                           posEnTabla=chequearVarEnTabla(yylval.str_val,yylineno);
+                                                        
                                                           factorPtr = crearHoja(yylval.str_val,tablaSimb[posEnTabla].tipoDeDato);
                                                           ponerEnPila(&pilaFactor,&factorPtr,sizeof(factorPtr));
                                                           printf("\nREGLA 55: <factor>-->ID\n");
